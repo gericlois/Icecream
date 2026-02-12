@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Offline - JMC Foodies</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Round">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            max-width: 400px;
+        }
+        .icon {
+            font-size: 64px;
+            color: #E91E63;
+            margin-bottom: 16px;
+        }
+        h1 { font-size: 22px; color: #333; margin-bottom: 8px; }
+        p { font-size: 14px; color: #666; margin-bottom: 24px; line-height: 1.5; }
+        button {
+            background: #E91E63;
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover { background: #D81B60; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <i class="material-icons icon">wifi_off</i>
+        <h1>You're Offline</h1>
+        <p>It looks like you've lost your internet connection. Please check your connection and try again.</p>
+        <button onclick="location.reload()">
+            <i class="material-icons" style="vertical-align:middle;font-size:18px;">refresh</i>
+            Try Again
+        </button>
+    </div>
+</body>
+</html>

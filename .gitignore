@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+deploy.zip
+android-app/app/build/
+android-app/.gradle/
+android-app/build/
+android-app/local.properties
+android-app/*.apk
+android-app/gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Uploads (user data)
+uploads/
+uploadsproof/
+downloads/*.apk
+
+# Sensitive config (contains production credentials)
+config/database_infinityfree.php
+
+# System files
+nul
+.DS_Store
+Thumbs.db
+
+# Temp/utility scripts
+_makedeploy.php
+_rezip.php
+extract.php
+cleanup.php
+
+# Claude session files
+.claude/

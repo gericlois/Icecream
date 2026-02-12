@@ -1,0 +1,264 @@
+/* JMC Foodies Custom Styles */
+
+/* Brand color overrides - Pink primary with Red/Yellow accents */
+/* Primary: Pink #E91E63 | Accent: Red #F44336, Yellow #FFC107 */
+.bg-gradient-primary {
+    background-image: linear-gradient(195deg, #EC407A 0%, #D81B60 100%) !important;
+}
+.btn.bg-gradient-primary:hover {
+    background-image: linear-gradient(195deg, #D81B60 0%, #C2185B 100%) !important;
+}
+a.text-primary, .text-primary {
+    color: #E91E63 !important;
+}
+
+/* Yellow accent for info elements */
+.bg-gradient-info {
+    background-image: linear-gradient(195deg, #FFC107 0%, #FFB300 100%) !important;
+}
+.shadow-info {
+    box-shadow: 0 4px 20px 0 rgba(255, 193, 7, 0.4) !important;
+}
+
+/* Red accent for danger/warning elements */
+.bg-gradient-warning {
+    background-image: linear-gradient(195deg, #FFB300 0%, #FF8F00 100%) !important;
+}
+.shadow-warning {
+    box-shadow: 0 4px 20px 0 rgba(255, 143, 0, 0.4) !important;
+}
+
+/* Yellow accent utilities */
+.text-warning, a.text-warning {
+    color: #FFC107 !important;
+}
+.border-warning {
+    border-color: #FFC107 !important;
+}
+
+/* Yellow highlight for active sidebar item */
+.sidebar-active {
+    background: linear-gradient(195deg, #FFC107 0%, #FFB300 100%) !important;
+    border-radius: 0.375rem;
+    color: #333 !important;
+}
+.sidebar-active .nav-link-text,
+.sidebar-active .material-icons,
+.sidebar-active div {
+    color: #333 !important;
+    opacity: 1 !important;
+}
+
+/* Yellow accent on form section headers */
+.card h6.text-uppercase {
+    border-left: 3px solid #FFC107;
+    padding-left: 8px;
+}
+
+/* Yellow progress bar */
+.progress-bar {
+    background-color: #FFC107 !important;
+    background-image: linear-gradient(195deg, #FFC107, #FFB300) !important;
+}
+
+/* Notch safe area - black bar at top for phones with notch */
+@supports (padding-top: env(safe-area-inset-top)) {
+    body::before {
+        content: '';
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: env(safe-area-inset-top, 0);
+        background: #000;
+        z-index: 9999;
+    }
+    body {
+        padding-top: env(safe-area-inset-top, 0);
+    }
+}
+
+/* Mobile bottom navigation for retailer */
+.mobile-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: #fff;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    z-index: 1050;
+}
+.mobile-bottom-nav a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #666;
+    font-size: 10px;
+    position: relative;
+    padding: 4px 8px;
+}
+.mobile-bottom-nav a.active {
+    color: #E91E63;
+}
+.mobile-bottom-nav a .material-icons {
+    font-size: 24px;
+}
+.cart-badge {
+    position: absolute;
+    top: -2px;
+    right: -4px;
+    background: #F44336;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 10px;
+    min-width: 16px;
+    height: 16px;
+    line-height: 16px;
+    text-align: center;
+}
+
+/* Retailer mobile optimizations */
+@media (max-width: 767.98px) {
+    .retailer-view .sidenav {
+        transform: translateX(-100%);
+    }
+    .retailer-view .main-content {
+        margin-left: 0 !important;
+    }
+    .retailer-view .container-fluid {
+        padding-bottom: 70px;
+    }
+}
+
+/* Product catalog cards */
+.product-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+.product-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+.product-icon {
+    font-size: 48px;
+    color: #E91E63;
+}
+
+/* KPI Cards */
+.kpi-card .card-body {
+    padding: 1rem;
+}
+
+/* Status badges */
+.badge {
+    font-size: 0.7rem;
+    padding: 0.4em 0.8em;
+}
+
+/* Print styles */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    .receipt-container, .receipt-container * {
+        visibility: visible;
+    }
+    .receipt-container {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    .no-print {
+        display: none !important;
+    }
+    @page {
+        size: letter;
+        margin: 1cm;
+    }
+}
+
+/* Login page */
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f2f5;
+}
+.login-card {
+    max-width: 400px;
+    width: 100%;
+}
+.login-header {
+    background: linear-gradient(195deg, #EC407A, #D81B60);
+    padding: 1.5rem;
+    margin: -24px 16px 0;
+    border-radius: 0.5rem;
+    text-align: center;
+    color: white;
+    border-bottom: 4px solid #FFC107;
+}
+
+/* Table improvements */
+.table-responsive {
+    min-height: 200px;
+}
+
+/* Cart quantity input */
+.qty-input {
+    width: 60px;
+    text-align: center;
+}
+
+/* Subsidy progress bar */
+.subsidy-progress {
+    height: 20px;
+    border-radius: 10px;
+}
+
+/* PWA Install Banner */
+.pwa-install-banner {
+    position: fixed;
+    bottom: 60px;
+    left: 0;
+    right: 0;
+    background: #fff;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+    z-index: 1060;
+    border-top: 3px solid #FFC107;
+}
+@media (min-width: 768px) {
+    .pwa-install-banner {
+        bottom: 0;
+        max-width: 500px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-radius: 12px 12px 0 0;
+    }
+}
+
+/* PWA Standalone mode - safe areas for notch phones */
+.pwa-standalone .mobile-bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    height: calc(60px + env(safe-area-inset-bottom, 0));
+}
+.pwa-standalone .pwa-install-banner {
+    display: none !important;
+}
+
+/* Splash screen look for PWA */
+@media (display-mode: standalone) {
+    .retailer-view .sidenav {
+        display: none !important;
+    }
+    .retailer-view .main-content {
+        margin-left: 0 !important;
+    }
+}
