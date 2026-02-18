@@ -165,6 +165,9 @@ require_once '../includes/sidebar.php';
                         <p><strong>Agent:</strong> <?php echo sanitize($order['agent_name'] ?? '-'); ?></p>
                         <p><strong>Payment:</strong> <span class="badge bg-gradient-<?php echo $order['payment_method'] === 'cod' ? 'secondary' : 'info'; ?>"><?php echo strtoupper($order['payment_method']); ?></span></p>
                         <p><strong>Ordered:</strong> <?php echo date('M d, Y h:i A', strtotime($order['created_at'])); ?></p>
+                        <?php if ($order['delivery_start_date']): ?>
+                        <p><strong>Scheduled Delivery:</strong> <?php echo date('M d', strtotime($order['delivery_start_date'])) . '-' . date('d, Y', strtotime($order['delivery_end_date'])); ?></p>
+                        <?php endif; ?>
                         <?php if ($order['approved_at']): ?>
                         <p><strong>Approved:</strong> <?php echo date('M d, Y h:i A', strtotime($order['approved_at'])); ?></p>
                         <p><strong>Approved by:</strong> <?php echo sanitize($order['approved_by_name'] ?? '-'); ?></p>

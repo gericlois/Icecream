@@ -31,6 +31,47 @@
 <script src="https://cdn.jsdelivr.net/npm/material-dashboard@3.0.9/assets/js/material-dashboard.min.js"></script>
 <script>const BASE_URL = '<?php echo BASE_URL; ?>';</script>
 <script src="<?php echo BASE_URL; ?>/assets/js/custom.js"></script>
+<script src="<?php echo BASE_URL; ?>/assets/js/notification-sounds.js"></script>
+<script>
+(function() {
+    // Play sound for flash messages
+    var flash = document.querySelector('[data-flash-type]');
+    if (flash) {
+        var type = flash.getAttribute('data-flash-type');
+        // Small delay so the page renders first
+        setTimeout(function() {
+            if (type === 'success') NotifSound.success();
+            else if (type === 'danger') NotifSound.error();
+            else if (type === 'warning') NotifSound.warning();
+            else if (type === 'info') NotifSound.notification();
+        }, 200);
+    }
+
+    // Play notification chime when there are new notifications
+    var bell = document.getElementById('dropdownNotif');
+    if (bell) {
+        var count = parseInt(bell.getAttribute('data-notif-count') || '0');
+        if (count > 0) {
+            // Use sessionStorage to only play once per page session (not on every page load)
+            var storageKey = 'notif_sound_' + count;
+            if (!sessionStorage.getItem(storageKey)) {
+                setTimeout(function() {
+                    NotifSound.notification();
+                }, 600);
+                sessionStorage.setItem(storageKey, '1');
+            }
+        } else {
+            // Clear old keys when no notifications
+            for (var i = sessionStorage.length - 1; i >= 0; i--) {
+                var key = sessionStorage.key(i);
+                if (key && key.indexOf('notif_sound_') === 0) {
+                    sessionStorage.removeItem(key);
+                }
+            }
+        }
+    }
+})();
+</script>
 
 <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'retailer'): ?>
 <script>

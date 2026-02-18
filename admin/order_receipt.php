@@ -89,6 +89,11 @@ $items = $conn->query("SELECT * FROM order_items WHERE order_id = $id ORDER BY i
             <span><span class="label">Sales Agent:</span> <?php echo sanitize($order['agent_name'] ?? '-'); ?></span>
             <span><span class="label">Order #:</span> <?php echo sanitize($order['order_number']); ?></span>
         </div>
+        <?php if ($order['delivery_start_date']): ?>
+        <div class="info-row">
+            <span><span class="label">Scheduled Delivery:</span> <?php echo date('M d', strtotime($order['delivery_start_date'])) . '-' . date('d, Y', strtotime($order['delivery_end_date'])); ?></span>
+        </div>
+        <?php endif; ?>
 
         <table>
             <thead>

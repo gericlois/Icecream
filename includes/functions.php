@@ -36,7 +36,7 @@ function show_flash() {
         unset($_SESSION['flash']);
         $type = htmlspecialchars($flash['type']);
         $msg = htmlspecialchars($flash['message']);
-        echo '<div class="alert alert-' . $type . ' alert-dismissible text-white fade show" role="alert">';
+        echo '<div class="alert alert-' . $type . ' alert-dismissible text-white fade show" role="alert" data-flash-type="' . $type . '">';
         echo '<span class="text-sm">' . $msg . '</span>';
         echo '<button type="button" class="btn-close text-lg py-3 opacity-10" data-bs-dismiss="alert"></button>';
         echo '</div>';
@@ -122,6 +122,70 @@ function credit_efunds($conn, $user_id, $amount, $type, $ref_type, $ref_id, $des
 
 function debit_efunds($conn, $user_id, $amount, $ref_type, $ref_id, $description, $processed_by = null) {
     return credit_efunds($conn, $user_id, -$amount, 'payment', $ref_type, $ref_id, $description, $processed_by);
+}
+
+function get_delivery_window($order_time = null) {
+    $now = $order_time ? new DateTime($order_time, new DateTimeZone('Asia/Manila')) : new DateTime('now', new DateTimeZone('Asia/Manila'));
+    $day = (int)$now->format('N'); // 1=Mon, 2=Tue, ..., 7=Sun
+    $hour = (int)$now->format('G'); // 0-23
+
+    // Determine which window we're in:
+    // Before Tuesday 5PM → deliver Thursday & Friday (same week)
+    // Tuesday 5PM to Friday 5PM → deliver Monday & Tuesday (next week)
+    // After Friday 5PM → deliver Thursday & Friday (next week)
+
+    $ref = clone $now;
+
+    if ($day < 2 || ($day === 2 && $hour < 17)) {
+        // Sunday(7→already past), Monday, or Tuesday before 5PM
+        // Delivery: this week's Thursday & Friday
+        // Cutoff: this Tuesday 5PM
+        $cutoff = clone $now;
+        $cutoff->modify('tuesday this week');
+        $cutoff->setTime(17, 0, 0);
+
+        $start = clone $now;
+        $start->modify('thursday this week');
+        $end = clone $now;
+        $end->modify('friday this week');
+    } elseif (($day === 2 && $hour >= 17) || ($day >= 3 && $day <= 4) || ($day === 5 && $hour < 17)) {
+        // Tuesday after 5PM, Wednesday, Thursday, or Friday before 5PM
+        // Delivery: next Monday & Tuesday
+        // Cutoff: this Friday 5PM
+        $cutoff = clone $now;
+        $cutoff->modify('friday this week');
+        $cutoff->setTime(17, 0, 0);
+
+        $start = clone $now;
+        $start->modify('next monday');
+        $end = clone $now;
+        $end->modify('next tuesday');
+    } else {
+        // Friday after 5PM, Saturday, or Sunday
+        // Delivery: next week's Thursday & Friday
+        // Cutoff: next Tuesday 5PM
+        $cutoff = clone $now;
+        $cutoff->modify('next tuesday');
+        $cutoff->setTime(17, 0, 0);
+
+        $start = clone $now;
+        $start->modify('next thursday');
+        $end = clone $now;
+        $end->modify('next friday');
+    }
+
+    $start->setTime(0, 0, 0);
+    $end->setTime(0, 0, 0);
+
+    return [
+        'start' => $start->format('Y-m-d'),
+        'end' => $end->format('Y-m-d'),
+        'cutoff' => $cutoff->format('Y-m-d H:i:s'),
+        'cutoff_label' => $cutoff->format('l, M d \\a\\t g:i A'),
+        'label' => $start->format('D') . '-' . $end->format('D') . ', ' . $start->format('M d') . '-' . $end->format('d'),
+        'start_label' => $start->format('M d, Y'),
+        'end_label' => $end->format('M d, Y'),
+    ];
 }
 
 function time_ago($datetime) {

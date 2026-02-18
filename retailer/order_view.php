@@ -41,7 +41,10 @@ require_once '../includes/sidebar.php';
                 <div class="row">
                     <div class="col-8">
                         <h6>Order <?php echo sanitize($order['order_number']); ?></h6>
-                        <p class="text-sm text-muted"><?php echo date('F d, Y h:i A', strtotime($order['created_at'])); ?></p>
+                        <p class="text-sm text-muted mb-1"><?php echo date('F d, Y h:i A', strtotime($order['created_at'])); ?></p>
+                        <?php if ($order['delivery_start_date']): ?>
+                        <p class="text-sm mb-0"><i class="material-icons text-info" style="font-size:14px;vertical-align:middle;">local_shipping</i> Delivery: <strong><?php echo date('M d', strtotime($order['delivery_start_date'])) . '-' . date('d, Y', strtotime($order['delivery_end_date'])); ?></strong></p>
+                        <?php endif; ?>
                     </div>
                     <div class="col-4 text-end">
                         <?php echo get_status_badge($order['status']); ?>

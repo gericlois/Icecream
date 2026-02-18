@@ -65,7 +65,7 @@ if ($_SESSION['role'] === 'admin') {
                 <?php endif; ?>
                 <!-- Notification bell -->
                 <li class="nav-item dropdown pe-2 d-flex align-items-center">
-                    <a href="javascript:;" class="nav-link text-body p-0 position-relative" id="dropdownNotif" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a href="javascript:;" class="nav-link text-body p-0 position-relative" id="dropdownNotif" data-bs-toggle="dropdown" aria-expanded="false" data-notif-count="<?php echo $notif_count; ?>">
                         <i class="material-icons">notifications</i>
                         <?php if ($notif_count > 0): ?>
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.6rem;">

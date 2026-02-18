@@ -92,6 +92,9 @@ require_once '../includes/sidebar.php';
                         <p><strong>Address:</strong> <?php echo sanitize($order['customer_address'] ?? '-'); ?></p>
                         <p><strong>Payment:</strong> <?php echo strtoupper($order['payment_method']); ?></p>
                         <p><strong>Date:</strong> <?php echo date('M d, Y h:i A', strtotime($order['created_at'])); ?></p>
+                        <?php if ($order['delivery_start_date']): ?>
+                        <p><strong>Delivery:</strong> <?php echo date('M d', strtotime($order['delivery_start_date'])) . '-' . date('d, Y', strtotime($order['delivery_end_date'])); ?></p>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <a href="<?php echo BASE_URL; ?>/agent/orders.php" class="btn btn-outline-primary w-100 mt-3">Back to Orders</a>

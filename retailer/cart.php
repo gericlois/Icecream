@@ -48,9 +48,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     // Create order
     $order_number = generate_order_number($conn);
     $agent_id = $_SESSION['agent_id'];
+    $delivery = get_delivery_window();
+    $delivery_start = $delivery['start'];
+    $delivery_end = $delivery['end'];
 
-    $stmt = $conn->prepare("INSERT INTO orders (order_number, user_id, agent_id, payment_method, discount_percent, subtotal, discount_amount, total_amount, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("siisdddds", $order_number, $uid, $agent_id, $payment_method, $actual_discount_pct, $subtotal, $discount_amount, $total, $notes);
+    $stmt = $conn->prepare("INSERT INTO orders (order_number, user_id, agent_id, payment_method, discount_percent, subtotal, discount_amount, total_amount, notes, delivery_start_date, delivery_end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("siisddddsss", $order_number, $uid, $agent_id, $payment_method, $actual_discount_pct, $subtotal, $discount_amount, $total, $notes, $delivery_start, $delivery_end);
     $stmt->execute();
     $order_id = $conn->insert_id;
     $stmt->close();
@@ -77,6 +80,7 @@ $subtotal = 0;
 foreach ($cart as $item) {
     $subtotal += $item['quantity_packs'] * $item['qty_per_pack'] * $item['unit_price'];
 }
+$delivery = get_delivery_window();
 
 require_once '../includes/header.php';
 require_once '../includes/sidebar.php';
@@ -152,6 +156,16 @@ require_once '../includes/sidebar.php';
                     </div>
                 </div>
                 <div class="col-lg-4">
+                    <div class="card mb-3">
+                        <div class="card-body py-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="material-icons text-info me-2">local_shipping</i>
+                                <h6 class="mb-0 text-sm">Delivery Schedule</h6>
+                            </div>
+                            <p class="text-sm mb-1"><strong>Order Cut-off:</strong> <?php echo $delivery['cutoff_label']; ?></p>
+                            <p class="text-sm mb-0"><strong>Expected Delivery:</strong> <?php echo $delivery['label']; ?></p>
+                        </div>
+                    </div>
                     <div class="card">
                         <div class="card-header pb-0"><h6>Order Summary</h6></div>
                         <div class="card-body">

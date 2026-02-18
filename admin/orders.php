@@ -63,13 +63,14 @@ require_once '../includes/sidebar.php';
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Payment</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Total</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Delivery</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Date</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php if ($orders->num_rows === 0): ?>
-                                    <tr><td colspan="9" class="text-center text-sm py-4">No orders found</td></tr>
+                                    <tr><td colspan="10" class="text-center text-sm py-4">No orders found</td></tr>
                                     <?php else: ?>
                                     <?php while ($o = $orders->fetch_assoc()): ?>
                                     <tr>
@@ -80,6 +81,7 @@ require_once '../includes/sidebar.php';
                                         <td><span class="badge bg-gradient-<?php echo $o['payment_method'] === 'cod' ? 'secondary' : 'info'; ?>"><?php echo strtoupper($o['payment_method']); ?></span></td>
                                         <td><span class="text-xs font-weight-bold"><?php echo format_currency($o['total_amount']); ?></span></td>
                                         <td><?php echo get_status_badge($o['status']); ?></td>
+                                        <td><span class="text-xs"><?php echo $o['delivery_start_date'] ? date('M d', strtotime($o['delivery_start_date'])) . '-' . date('d', strtotime($o['delivery_end_date'])) : '-'; ?></span></td>
                                         <td><span class="text-xs"><?php echo date('M d, Y', strtotime($o['created_at'])); ?></span></td>
                                         <td>
                                             <a href="<?php echo BASE_URL; ?>/admin/order_view.php?id=<?php echo $o['id']; ?>" class="btn btn-sm bg-gradient-info mb-0">View</a>
