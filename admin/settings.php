@@ -11,7 +11,7 @@ require_login();
 require_role(['admin']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $keys = ['efunds_discount_percent', 'subsidy_min_orders', 'subsidy_factor', 'subsidy_rate',
+    $keys = ['efunds_discount_percent', 'subsidy_factor', 'agent_subsidy_min_orders',
              'company_name', 'company_address', 'company_tin', 'company_hotline'];
     foreach ($keys as $key) {
         if (isset($_POST[$key])) {
@@ -58,25 +58,20 @@ require_once '../includes/sidebar.php';
                                 </div>
                                 <div class="col-md-6">
                                     <div class="input-group input-group-outline is-filled my-3">
-                                        <label class="form-label">Subsidy Min Orders (₱)</label>
-                                        <input type="number" name="subsidy_min_orders" class="form-control" value="<?php echo sanitize($settings['subsidy_min_orders'] ?? '6000'); ?>" step="1" min="0">
+                                        <label class="form-label">Subsidy Factor</label>
+                                        <input type="number" name="subsidy_factor" class="form-control" value="<?php echo sanitize($settings['subsidy_factor'] ?? '0.88'); ?>" step="0.01" min="0" max="1">
                                     </div>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="input-group input-group-outline is-filled my-3">
-                                        <label class="form-label">Subsidy Factor</label>
-                                        <input type="number" name="subsidy_factor" class="form-control" value="<?php echo sanitize($settings['subsidy_factor'] ?? '0.88'); ?>" step="0.01" min="0" max="1">
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="input-group input-group-outline is-filled my-3">
-                                        <label class="form-label">Subsidy Rate</label>
-                                        <input type="number" name="subsidy_rate" class="form-control" value="<?php echo sanitize($settings['subsidy_rate'] ?? '0.05'); ?>" step="0.01" min="0" max="1">
+                                        <label class="form-label">Agent Over-Ride Min. Orders (₱)</label>
+                                        <input type="number" name="agent_subsidy_min_orders" class="form-control" value="<?php echo sanitize($settings['agent_subsidy_min_orders'] ?? '8000'); ?>" step="1" min="0">
                                     </div>
                                 </div>
                             </div>
+                            <p class="text-xs text-muted">Retailer subsidy rate and minimum quota are configured per package in <a href="<?php echo BASE_URL; ?>/admin/packages.php">Package Management</a>. Agent over-ride uses the same package rates but requires the combined minimum above.</p>
                         </div>
                     </div>
                     <div class="card mb-4">

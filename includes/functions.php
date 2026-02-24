@@ -70,6 +70,7 @@ function get_cart_count() {
 }
 
 function calculate_subsidy($conn, $user_id, $month, $year) {
+    // Get total delivered orders for this user/month
     $stmt = $conn->prepare("
         SELECT COALESCE(SUM(total_amount), 0) as total
         FROM orders
@@ -81,15 +82,34 @@ function calculate_subsidy($conn, $user_id, $month, $year) {
     $total = (float)$stmt->get_result()->fetch_assoc()['total'];
     $stmt->close();
 
-    $min = (float)get_setting($conn, 'subsidy_min_orders') ?: 6000;
+    // Get per-package subsidy rate and quota from user's package
+    $stmt = $conn->prepare("
+        SELECT p.subsidy_rate, p.subsidy_min_orders, p.name as package_name
+        FROM users u
+        JOIN packages p ON u.package_info = p.slug
+        WHERE u.id = ?
+    ");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $pkg = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
     $factor = (float)get_setting($conn, 'subsidy_factor') ?: 0.88;
-    $rate = (float)get_setting($conn, 'subsidy_rate') ?: 0.05;
+
+    if (!$pkg || $pkg['subsidy_rate'] <= 0) {
+        // User has no package or package has no subsidy
+        return ['eligible' => false, 'total' => $total, 'subsidy' => 0, 'min' => 0, 'rate' => 0, 'factor' => $factor, 'package' => null];
+    }
+
+    $rate = (float)$pkg['subsidy_rate'];
+    $min = (float)$pkg['subsidy_min_orders'];
+    $package_name = $pkg['package_name'];
 
     if ($total < $min) {
-        return ['eligible' => false, 'total' => $total, 'subsidy' => 0, 'min' => $min];
+        return ['eligible' => false, 'total' => $total, 'subsidy' => 0, 'min' => $min, 'rate' => $rate, 'factor' => $factor, 'package' => $package_name];
     }
     $subsidy = round($total * $factor * $rate, 2);
-    return ['eligible' => true, 'total' => $total, 'subsidy' => $subsidy, 'min' => $min];
+    return ['eligible' => true, 'total' => $total, 'subsidy' => $subsidy, 'min' => $min, 'rate' => $rate, 'factor' => $factor, 'package' => $package_name];
 }
 
 function credit_efunds($conn, $user_id, $amount, $type, $ref_type, $ref_id, $description, $processed_by = null) {
@@ -118,6 +138,63 @@ function credit_efunds($conn, $user_id, $amount, $type, $ref_type, $ref_id, $des
         $conn->rollback();
         return false;
     }
+}
+
+function calculate_agent_subsidy($conn, $agent_id, $month, $year) {
+    // Get all active retailers tagged to this agent with their package info
+    $stmt = $conn->prepare("
+        SELECT u.id, u.full_name, u.package_info, p.name as package_name, p.subsidy_rate
+        FROM users u
+        LEFT JOIN packages p ON u.package_info = p.slug
+        WHERE u.agent_id = ? AND u.role = 'retailer' AND u.status = 'active'
+        ORDER BY u.full_name
+    ");
+    $stmt->bind_param("i", $agent_id);
+    $stmt->execute();
+    $retailers = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    $grand_total = 0;
+    $total_subsidy = 0;
+    $breakdown = [];
+
+    foreach ($retailers as $r) {
+        $stmt = $conn->prepare("
+            SELECT COALESCE(SUM(total_amount), 0) as total
+            FROM orders
+            WHERE user_id = ? AND status = 'delivered'
+              AND MONTH(delivered_at) = ? AND YEAR(delivered_at) = ?
+        ");
+        $stmt->bind_param("iii", $r['id'], $month, $year);
+        $stmt->execute();
+        $retailer_total = (float)$stmt->get_result()->fetch_assoc()['total'];
+        $stmt->close();
+
+        $rate = (float)($r['subsidy_rate'] ?? 0);
+        $retailer_subsidy = round($retailer_total * $rate, 2);
+        $grand_total += $retailer_total;
+        $total_subsidy += $retailer_subsidy;
+
+        $breakdown[] = [
+            'id' => $r['id'],
+            'name' => $r['full_name'],
+            'package' => $r['package_name'] ?? 'No Package',
+            'rate' => $rate,
+            'orders_total' => $retailer_total,
+            'subsidy' => $retailer_subsidy,
+        ];
+    }
+
+    $min = (float)get_setting($conn, 'agent_subsidy_min_orders') ?: 8000;
+    $eligible = $grand_total >= $min;
+
+    return [
+        'eligible' => $eligible,
+        'grand_total' => $grand_total,
+        'total_subsidy' => $eligible ? $total_subsidy : 0,
+        'min' => $min,
+        'breakdown' => $breakdown,
+    ];
 }
 
 function debit_efunds($conn, $user_id, $amount, $ref_type, $ref_id, $description, $processed_by = null) {

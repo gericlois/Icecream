@@ -177,28 +177,27 @@ if (isset($_SESSION['register_success'])) {
                                     <label class="ms-0">Package Information</label>
                                     <select name="package_info" class="form-control">
                                         <option value="">-- Select --</option>
-                                        <option value="starter_pack">Starter Pack</option>
-                                        <option value="premium_pack">Premium Pack</option>
+                                        <?php
+                                        $packages_result = $conn->query("SELECT slug, name FROM packages WHERE status = 'active' ORDER BY sort_order");
+                                        while ($pkg = $packages_result->fetch_assoc()):
+                                        ?>
+                                        <option value="<?php echo sanitize($pkg['slug']); ?>"><?php echo sanitize($pkg['name']); ?></option>
+                                        <?php endwhile; ?>
                                     </select>
                                 </div>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="input-group input-group-static mb-3">
-                                    <label class="ms-0">Payment Type</label>
-                                    <select name="payment_type" class="form-control">
-                                        <option value="">-- Select --</option>
-                                        <option value="cash">Cash</option>
-                                        <option value="check">Check</option>
-                                        <option value="online_transfer">Online Transfer</option>
-                                    </select>
+                                <div class="input-group input-group-outline mb-3">
+                                    <label class="form-label">NAO's Name</label>
+                                    <input type="text" name="nao_name" class="form-control">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="input-group input-group-outline mb-3">
-                                    <label class="form-label">Payment Details</label>
-                                    <input type="text" name="payment_details" class="form-control">
+                                    <label class="form-label">Salesman Name</label>
+                                    <input type="text" name="salesman_name" class="form-control">
                                 </div>
                             </div>
                         </div>
@@ -267,18 +266,20 @@ if (isset($_SESSION['register_success'])) {
                         <h6 class="text-uppercase text-secondary text-xs font-weight-bolder mt-4 mb-2">Terms and Conditions</h6>
                         <hr class="horizontal dark mt-0 mb-3">
                         <div class="border rounded p-3 mb-3" style="max-height:200px;overflow-y:auto;background:#fafafa;font-size:0.75rem;line-height:1.6;">
-                            <p class="mb-2">Upon signing this form, you are obliged to know more about JMC Foodies Ice Cream Distributions and all the benefits that you can avail. You agreed with full consent and will to be an independent reseller. You are hereby attested as an official reseller of JMC Foodies Ice Cream Distributions and any means of violations from the POLICIES AND PROCEDURE written below will merit a disciplinary action or termination of your resellership.</p>
+                            <p class="font-weight-bold mb-1">TERMS AND CONDITIONS:</p>
+                            <p class="mb-2">Upon Signing this form, you are obliged to know more about JMC Foodies Ice Cream Distributions and all the benefits that you can avail. You agreed with full consent and will to be an independent reseller. You are hereby attested as an official reseller of JMC Foodies Ice Cream Distributions and any means of violations from the POLICIES AND PROCEDURE written below will merit a disciplinary action or termination of your resellership.</p>
                             <p class="font-weight-bold mb-1">POLICIES AND PROCEDURES:</p>
                             <ul class="ps-3 mb-0">
-                                <li>Understand the Terms and Conditions.</li>
-                                <li>For 7 Days Product Terms of any type of payment the reseller must pay on time the amount of delivered products to avoid a penalty of 1% per day or not less than Php100.00 as collectible charges for the collector's expenses. (Not Applicable for all type of Resellers)</li>
+                                <li>Understand the Terms and Conditions</li>
+                                <li>For the payment of initial products and re-orders only cash on delivery (COD) and e-fund payment via Gcash Cash in is accepted.</li>
                                 <li>For Product Bad Orders, only melted and damaged products due to mishandling of delivery and calamity are refundable. Bad Orders due to negligence of resellers are not refundable.</li>
-                                <li>In case of Scheduled Power Interruption NO OPENING of freezer is strictly implemented to avoid damages and deformation on the products. The freezer can sustain products up to 18 hours of proper handling.</li>
+                                <li>For Bad Orders due to mishandling of delivery the full amount of melted or deformed products are refundable. For B.O. due to calamity only 60% of the product value will be refunded.</li>
+                                <li>In case of Scheduled Power Interruption NO OPENING of freezer is strictly implemented to avoid damages and deformation on the products. The freezer can sustain the products up to 18 hours of proper handling.</li>
                                 <li>In case of unscheduled power interruption same procedures will be applied with Scheduled Power Interruption.</li>
-                                <li>In cases of freezer breakdown or any type of power interruption, the reseller is obliged to report immediately to the concerned agent or directly to the hotlines to avoid unwanted damages and delays in both business operation.</li>
+                                <li>In cases of freezer breakdown or any type of power interruption, the reseller is obliged to report immediately to the concerned agent or directly to the hotlines of JMC Foodies Ice Cream Distributions to avoid unwanted damages and delays in both business operation.</li>
                                 <li>The freezer is provided in terms of lending-borrowing platform which means that the ownership of the freezer belongs to JMC Foodies Ice Cream Distributions and not to the reseller or any of the employees and agents of the company. Freezer Lending is protected by legal contract as well as the freezer pull out activities. Always transact with documents even with authorized personnel to avoid inconvenience in the future.</li>
-                                <li>A 5% Electric Subsidy is applied for resellers with a minimum of P8,000.00 monthly re-order exclusive of the initial package. For a 7 Days Term type of account, on-time payment of delivered items is required to avail of the electric subsidy.</li>
-                                <li>To qualify every reseller for the free freezer lending-borrowing platform, the reseller must remain active or comply on at least once a week ordering. A minimum of P2,000.00 product reorder is required for every delivery either for COD and 7 Days Terms.</li>
+                                <li>A 5% Electric Subsidy is applied for resellers with a minimum of P8,000.00 monthly re-order exclusive of the initial package.</li>
+                                <li>To qualify every reseller for the free freezer lending-borrowing platform, the reseller must remain active or comply on at least once a week ordering. A minimum of P2,000.00 product reorder is required for every delivery.</li>
                                 <li>For Three (3) consecutive weeks of non-ordering the account becomes dormant and is subject for immediate freezer pull-out with a maximum 7 days grace period before a mandatory freezer pull-out take place. Any remaining products is non-refundable upon declaration of account dormancy.</li>
                             </ul>
                         </div>

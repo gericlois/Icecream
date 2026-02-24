@@ -10,22 +10,55 @@ require_once 'includes/functions.php';
 require_login();
 
 $user_id = (int)$_SESSION['user_id'];
-$user = $conn->query("SELECT * FROM users WHERE id = $user_id")->fetch_assoc();
+$user = $conn->query("SELECT u.*, p.name as package_name FROM users u LEFT JOIN packages p ON u.package_info = p.slug WHERE u.id = $user_id")->fetch_assoc();
+
+// Fallback: parse full_name into last/first/middle if separate fields are empty
+if (empty($user['last_name']) && empty($user['first_name']) && !empty($user['full_name'])) {
+    $fn = $user['full_name'];
+    if (strpos($fn, ',') !== false) {
+        $parts = explode(',', $fn, 2);
+        $user['last_name'] = trim($parts[0]);
+        $rest = trim($parts[1] ?? '');
+        $words = preg_split('/\s+/', $rest, 2);
+        $user['first_name'] = $words[0] ?? '';
+        $user['middle_name'] = $words[1] ?? '';
+    } else {
+        $words = preg_split('/\s+/', $fn);
+        if (count($words) >= 2) {
+            $user['last_name'] = array_pop($words);
+            $user['first_name'] = array_shift($words);
+            $user['middle_name'] = implode(' ', $words);
+        } else {
+            $user['first_name'] = $fn;
+        }
+    }
+}
 
 // Handle profile update
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $full_name = trim($_POST['full_name'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $phone = trim($_POST['phone'] ?? '');
+    $last_name = trim($_POST['last_name'] ?? '');
+    $first_name = trim($_POST['first_name'] ?? '');
+    $middle_name = trim($_POST['middle_name'] ?? '');
+    $full_name = trim("$last_name, $first_name $middle_name");
+    $birthday = $_POST['birthday'] ?: null;
+    $gender = in_array($_POST['gender'] ?? '', ['M', 'F']) ? $_POST['gender'] : null;
+    $sss_gsis = trim($_POST['sss_gsis'] ?? '');
+    $tin = trim($_POST['tin'] ?? '');
     $address = trim($_POST['address'] ?? '');
+    $tel_no = trim($_POST['tel_no'] ?? '');
+    $phone = trim($_POST['phone'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $auth_rep_name = trim($_POST['auth_rep_name'] ?? '');
+    $auth_rep_relationship = trim($_POST['auth_rep_relationship'] ?? '');
+    $auth_rep_gender = in_array($_POST['auth_rep_gender'] ?? '', ['M', 'F']) ? $_POST['auth_rep_gender'] : null;
     $new_password = trim($_POST['new_password'] ?? '');
     $confirm_password = trim($_POST['confirm_password'] ?? '');
 
-    if (empty($full_name)) {
-        flash_message('danger', 'Full name is required.');
+    if (empty($last_name) || empty($first_name)) {
+        flash_message('danger', 'Last name and first name are required.');
     } else {
-        $stmt = $conn->prepare("UPDATE users SET full_name = ?, email = ?, phone = ?, address = ? WHERE id = ?");
-        $stmt->bind_param("ssssi", $full_name, $email, $phone, $address, $user_id);
+        $stmt = $conn->prepare("UPDATE users SET full_name=?, last_name=?, first_name=?, middle_name=?, birthday=?, gender=?, sss_gsis=?, tin=?, address=?, tel_no=?, phone=?, email=?, auth_rep_name=?, auth_rep_relationship=?, auth_rep_gender=? WHERE id=?");
+        $stmt->bind_param("sssssssssssssssi", $full_name, $last_name, $first_name, $middle_name, $birthday, $gender, $sss_gsis, $tin, $address, $tel_no, $phone, $email, $auth_rep_name, $auth_rep_relationship, $auth_rep_gender, $user_id);
         $stmt->execute();
         $stmt->close();
 
@@ -70,31 +103,58 @@ require_once 'includes/sidebar.php';
                     </div>
                     <div class="card-body">
                         <form method="POST">
+                            <!-- Personal Information -->
+                            <h6 class="text-uppercase text-secondary text-xs font-weight-bolder mt-2 mb-2">Personal Information</h6>
+                            <hr class="horizontal dark mt-0 mb-3">
                             <div class="row">
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-4 mb-3">
                                     <div class="input-group input-group-outline input-group-static">
-                                        <label>Full Name *</label>
-                                        <input type="text" name="full_name" class="form-control" value="<?php echo sanitize($user['full_name']); ?>" required>
+                                        <label>Last Name *</label>
+                                        <input type="text" name="last_name" class="form-control" value="<?php echo sanitize($user['last_name'] ?? ''); ?>" required>
                                     </div>
                                 </div>
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-4 mb-3">
                                     <div class="input-group input-group-outline input-group-static">
-                                        <label>Username</label>
-                                        <input type="text" class="form-control" value="<?php echo sanitize($user['username']); ?>" disabled>
+                                        <label>First Name *</label>
+                                        <input type="text" name="first_name" class="form-control" value="<?php echo sanitize($user['first_name'] ?? ''); ?>" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="input-group input-group-outline input-group-static">
+                                        <label>Middle Name</label>
+                                        <input type="text" name="middle_name" class="form-control" value="<?php echo sanitize($user['middle_name'] ?? ''); ?>">
                                     </div>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <div class="input-group input-group-outline input-group-static">
-                                        <label>Email</label>
-                                        <input type="email" name="email" class="form-control" value="<?php echo sanitize($user['email'] ?? ''); ?>">
+                                        <label>Birthday</label>
+                                        <input type="date" name="birthday" class="form-control" value="<?php echo sanitize($user['birthday'] ?? ''); ?>">
                                     </div>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <div class="input-group input-group-outline input-group-static">
-                                        <label>Phone</label>
-                                        <input type="text" name="phone" class="form-control" value="<?php echo sanitize($user['phone'] ?? ''); ?>">
+                                        <label>Gender</label>
+                                        <select name="gender" class="form-control">
+                                            <option value="">-- Select --</option>
+                                            <option value="M" <?php echo ($user['gender'] ?? '') === 'M' ? 'selected' : ''; ?>>Male</option>
+                                            <option value="F" <?php echo ($user['gender'] ?? '') === 'F' ? 'selected' : ''; ?>>Female</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="input-group input-group-outline input-group-static">
+                                        <label>SSS/GSIS #</label>
+                                        <input type="text" name="sss_gsis" class="form-control" value="<?php echo sanitize($user['sss_gsis'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="input-group input-group-outline input-group-static">
+                                        <label>TIN #</label>
+                                        <input type="text" name="tin" class="form-control" value="<?php echo sanitize($user['tin'] ?? ''); ?>">
                                     </div>
                                 </div>
                             </div>
@@ -104,8 +164,58 @@ require_once 'includes/sidebar.php';
                                     <input type="text" name="address" class="form-control" value="<?php echo sanitize($user['address'] ?? ''); ?>">
                                 </div>
                             </div>
-                            <hr class="horizontal dark">
-                            <h6 class="text-sm">Change Password <small class="text-muted">(leave blank to keep current)</small></h6>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <div class="input-group input-group-outline input-group-static">
+                                        <label>Tel. No.</label>
+                                        <input type="text" name="tel_no" class="form-control" value="<?php echo sanitize($user['tel_no'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="input-group input-group-outline input-group-static">
+                                        <label>Mobile</label>
+                                        <input type="text" name="phone" class="form-control" value="<?php echo sanitize($user['phone'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="input-group input-group-outline input-group-static">
+                                        <label>Email</label>
+                                        <input type="email" name="email" class="form-control" value="<?php echo sanitize($user['email'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Authorized Representative -->
+                            <h6 class="text-uppercase text-secondary text-xs font-weight-bolder mt-4 mb-2">Authorized Representative</h6>
+                            <hr class="horizontal dark mt-0 mb-3">
+                            <div class="row">
+                                <div class="col-md-5 mb-3">
+                                    <div class="input-group input-group-outline input-group-static">
+                                        <label>Full Name</label>
+                                        <input type="text" name="auth_rep_name" class="form-control" value="<?php echo sanitize($user['auth_rep_name'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="input-group input-group-outline input-group-static">
+                                        <label>Relationship</label>
+                                        <input type="text" name="auth_rep_relationship" class="form-control" value="<?php echo sanitize($user['auth_rep_relationship'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="input-group input-group-outline input-group-static">
+                                        <label>Gender</label>
+                                        <select name="auth_rep_gender" class="form-control">
+                                            <option value="">-- Select --</option>
+                                            <option value="M" <?php echo ($user['auth_rep_gender'] ?? '') === 'M' ? 'selected' : ''; ?>>Male</option>
+                                            <option value="F" <?php echo ($user['auth_rep_gender'] ?? '') === 'F' ? 'selected' : ''; ?>>Female</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Change Password -->
+                            <h6 class="text-uppercase text-secondary text-xs font-weight-bolder mt-4 mb-2">Change Password <small class="text-muted fw-normal text-capitalize">(leave blank to keep current)</small></h6>
+                            <hr class="horizontal dark mt-0 mb-3">
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <div class="input-group input-group-outline">
@@ -126,7 +236,8 @@ require_once 'includes/sidebar.php';
                 </div>
             </div>
             <div class="col-lg-4">
-                <div class="card">
+                <!-- Profile Card -->
+                <div class="card mb-4">
                     <div class="card-body text-center p-4">
                         <div class="mb-3">
                             <span style="width:80px;height:80px;border-radius:50%;background:linear-gradient(195deg,#EC407A,#D81B60);display:inline-flex;align-items:center;justify-content:center;">
@@ -153,6 +264,53 @@ require_once 'includes/sidebar.php';
                         </div>
                     </div>
                 </div>
+
+                <!-- Application Info (read-only) -->
+                <?php if ($user['role'] === 'retailer'): ?>
+                <div class="card mb-4">
+                    <div class="card-header pb-0"><h6 class="text-sm">Application Info</h6></div>
+                    <div class="card-body pt-2">
+                        <p class="text-sm mb-2">
+                            <span class="text-secondary">Package:</span>
+                            <strong><?php echo sanitize($user['package_name'] ?? 'Not assigned'); ?></strong>
+                        </p>
+                        <p class="text-sm mb-2">
+                            <span class="text-secondary">Application Type:</span>
+                            <strong><?php
+                                $types = ['cod' => 'Cash on Delivery', '7days_term' => '7 Days Term'];
+                                echo $types[$user['application_type'] ?? ''] ?? 'Not set';
+                            ?></strong>
+                        </p>
+                        <?php if (!empty($user['nao_name'])): ?>
+                        <p class="text-sm mb-2"><span class="text-secondary">NAO:</span> <?php echo sanitize($user['nao_name']); ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($user['salesman_name'])): ?>
+                        <p class="text-sm mb-0"><span class="text-secondary">Salesman:</span> <?php echo sanitize($user['salesman_name']); ?></p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Freezer Info (read-only) -->
+                <?php if (!empty($user['freezer_brand']) || !empty($user['freezer_serial'])): ?>
+                <div class="card">
+                    <div class="card-header pb-0"><h6 class="text-sm">Freezer Info</h6></div>
+                    <div class="card-body pt-2">
+                        <?php if (!empty($user['freezer_brand'])): ?>
+                        <p class="text-sm mb-2"><span class="text-secondary">Brand:</span> <?php echo sanitize($user['freezer_brand']); ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($user['freezer_size'])): ?>
+                        <p class="text-sm mb-2"><span class="text-secondary">Size:</span> <?php echo sanitize($user['freezer_size']); ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($user['freezer_serial'])): ?>
+                        <p class="text-sm mb-2"><span class="text-secondary">Serial #:</span> <?php echo sanitize($user['freezer_serial']); ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($user['freezer_status'])): ?>
+                        <p class="text-sm mb-0"><span class="text-secondary">Status:</span> <?php echo sanitize($user['freezer_status']); ?></p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+                <?php endif; ?>
             </div>
         </div>
     </div>

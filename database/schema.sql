@@ -24,7 +24,7 @@ CREATE TABLE `users` (
     `email` VARCHAR(100) DEFAULT NULL,
     `efunds_balance` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
     `application_type` ENUM('cod','7days_term') DEFAULT NULL,
-    `package_info` ENUM('starter_pack','premium_pack') DEFAULT NULL,
+    `package_info` VARCHAR(100) DEFAULT NULL,
     `payment_type` ENUM('cash','check','online_transfer') DEFAULT NULL,
     `payment_details` TEXT DEFAULT NULL,
     `auth_rep_name` VARCHAR(100) DEFAULT NULL,
@@ -34,6 +34,8 @@ CREATE TABLE `users` (
     `freezer_size` VARCHAR(50) DEFAULT NULL,
     `freezer_serial` VARCHAR(100) DEFAULT NULL,
     `freezer_status` VARCHAR(50) DEFAULT NULL,
+    `nao_name` VARCHAR(100) DEFAULT NULL,
+    `salesman_name` VARCHAR(100) DEFAULT NULL,
     `registered_by` INT DEFAULT NULL,
     `agent_id` INT DEFAULT NULL,
     `status` ENUM('active','inactive') NOT NULL DEFAULT 'active',
@@ -152,6 +154,19 @@ CREATE TABLE `electric_subsidy` (
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY `user_month_year` (`user_id`, `month`, `year`),
     FOREIGN KEY (`user_id`) REFERENCES `users`(`id`)
+) ENGINE=InnoDB;
+
+-- Packages (for registration form + subsidy rates)
+CREATE TABLE `packages` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(100) NOT NULL,
+    `slug` VARCHAR(100) NOT NULL UNIQUE,
+    `description` TEXT DEFAULT NULL,
+    `status` ENUM('active','inactive') DEFAULT 'active',
+    `subsidy_rate` DECIMAL(5,4) DEFAULT 0.0000,
+    `subsidy_min_orders` DECIMAL(12,2) DEFAULT 0.00,
+    `sort_order` INT DEFAULT 0,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 -- System settings

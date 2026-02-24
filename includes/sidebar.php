@@ -36,6 +36,14 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link text-white <?php echo ($active_page ?? '') === 'packages' ? 'active sidebar-active' : ''; ?>" href="<?php echo BASE_URL; ?>/admin/packages.php">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="material-icons opacity-10">inventory_2</i>
+                    </div>
+                    <span class="nav-link-text ms-1">Packages</span>
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link text-white <?php echo ($active_page ?? '') === 'users' ? 'active sidebar-active' : ''; ?>" href="<?php echo BASE_URL; ?>/admin/users.php">
                     <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="material-icons opacity-10">people</i>
@@ -102,6 +110,22 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link text-white <?php echo ($active_page ?? '') === 'earnings' ? 'active sidebar-active' : ''; ?>" href="<?php echo BASE_URL; ?>/agent/earnings.php">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="material-icons opacity-10">trending_up</i>
+                    </div>
+                    <span class="nav-link-text ms-1">Earnings</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white <?php echo ($active_page ?? '') === 'sales_transactions' ? 'active sidebar-active' : ''; ?>" href="<?php echo BASE_URL; ?>/agent/sales_transactions.php">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="material-icons opacity-10">point_of_sale</i>
+                    </div>
+                    <span class="nav-link-text ms-1">Sales Transactions</span>
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link text-white <?php echo ($active_page ?? '') === 'orders' ? 'active sidebar-active' : ''; ?>" href="<?php echo BASE_URL; ?>/agent/orders.php">
                     <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="material-icons opacity-10">receipt_long</i>
@@ -115,6 +139,14 @@
                         <i class="material-icons opacity-10">add_shopping_cart</i>
                     </div>
                     <span class="nav-link-text ms-1">New Order</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white <?php echo ($active_page ?? '') === 'subsidy' ? 'active sidebar-active' : ''; ?>" href="<?php echo BASE_URL; ?>/agent/subsidy.php">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="material-icons opacity-10">bolt</i>
+                    </div>
+                    <span class="nav-link-text ms-1">My Over-Ride</span>
                 </a>
             </li>
 

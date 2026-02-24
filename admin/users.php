@@ -31,9 +31,10 @@ if (in_array($role_filter, ['admin', 'subdealer', 'retailer'])) {
 }
 
 $users = $conn->query("
-    SELECT u.*, a.full_name as agent_name
+    SELECT u.*, a.full_name as agent_name, p.name as package_name
     FROM users u
     LEFT JOIN users a ON u.agent_id = a.id
+    LEFT JOIN packages p ON u.package_info = p.slug
     $where
     ORDER BY u.created_at DESC
 ");
@@ -78,6 +79,8 @@ require_once '../includes/sidebar.php';
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">User</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Role</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Phone</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Address</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Package</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Agent</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">E-Funds</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
@@ -97,6 +100,8 @@ require_once '../includes/sidebar.php';
                                         </td>
                                         <td><span class="badge bg-gradient-<?php echo $u['role'] === 'admin' ? 'danger' : ($u['role'] === 'subdealer' ? 'warning' : 'info'); ?>"><?php echo ucfirst($u['role']); ?></span></td>
                                         <td><span class="text-xs"><?php echo sanitize($u['phone'] ?? '-'); ?></span></td>
+                                        <td><span class="text-xs"><?php echo sanitize($u['address'] ?? '-'); ?></span></td>
+                                        <td><span class="text-xs"><?php echo sanitize($u['package_name'] ?? '-'); ?></span></td>
                                         <td><span class="text-xs"><?php echo sanitize($u['agent_name'] ?? '-'); ?></span></td>
                                         <td><span class="text-xs font-weight-bold"><?php echo format_currency($u['efunds_balance']); ?></span></td>
                                         <td><span class="badge bg-gradient-<?php echo $u['status'] === 'active' ? 'success' : 'secondary'; ?>"><?php echo ucfirst($u['status']); ?></span></td>

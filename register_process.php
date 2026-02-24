@@ -29,9 +29,19 @@ $email = trim($_POST['email'] ?? '');
 
 // Application info
 $application_type = in_array($_POST['application_type'] ?? '', ['cod', '7days_term']) ? $_POST['application_type'] : null;
-$package_info = in_array($_POST['package_info'] ?? '', ['starter_pack', 'premium_pack']) ? $_POST['package_info'] : null;
-$payment_type = in_array($_POST['payment_type'] ?? '', ['cash', 'check', 'online_transfer']) ? $_POST['payment_type'] : null;
-$payment_details = trim($_POST['payment_details'] ?? '');
+$package_info_input = trim($_POST['package_info'] ?? '');
+$package_info = null;
+if ($package_info_input !== '') {
+    $stmt_pkg = $conn->prepare("SELECT slug FROM packages WHERE slug = ? AND status = 'active'");
+    $stmt_pkg->bind_param("s", $package_info_input);
+    $stmt_pkg->execute();
+    if ($stmt_pkg->get_result()->num_rows > 0) {
+        $package_info = $package_info_input;
+    }
+    $stmt_pkg->close();
+}
+$nao_name = trim($_POST['nao_name'] ?? '');
+$salesman_name = trim($_POST['salesman_name'] ?? '');
 
 // Authorized representative
 $auth_rep_name = trim($_POST['auth_rep_name'] ?? '');
@@ -85,15 +95,16 @@ $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 $role = 'subdealer';
 $status = 'inactive';
 
-$stmt = $conn->prepare("INSERT INTO users (username, password, full_name, last_name, first_name, middle_name, birthday, gender, sss_gsis, tin, tel_no, role, phone, address, email, application_type, package_info, payment_type, payment_details, auth_rep_name, auth_rep_relationship, auth_rep_gender, freezer_brand, freezer_size, freezer_serial, freezer_status, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt = $conn->prepare("INSERT INTO users (username, password, full_name, last_name, first_name, middle_name, birthday, gender, sss_gsis, tin, tel_no, role, phone, address, email, application_type, package_info, auth_rep_name, auth_rep_relationship, auth_rep_gender, freezer_brand, freezer_size, freezer_serial, freezer_status, nao_name, salesman_name, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 $stmt->bind_param("sssssssssssssssssssssssssss",
     $username, $hashed_password, $full_name,
     $last_name, $first_name, $middle_name,
     $birthday, $gender, $sss_gsis, $tin, $tel_no,
     $role, $phone, $address, $email,
-    $application_type, $package_info, $payment_type, $payment_details,
+    $application_type, $package_info,
     $auth_rep_name, $auth_rep_relationship, $auth_rep_gender,
     $freezer_brand, $freezer_size, $freezer_serial, $freezer_status,
+    $nao_name, $salesman_name,
     $status
 );
 

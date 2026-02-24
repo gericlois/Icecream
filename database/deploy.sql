@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS `users` (
     `email` VARCHAR(100) DEFAULT NULL,
     `efunds_balance` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
     `application_type` ENUM('cod','7days_term') DEFAULT NULL,
-    `package_info` ENUM('starter_pack','premium_pack') DEFAULT NULL,
+    `package_info` VARCHAR(100) DEFAULT NULL,
     `payment_type` ENUM('cash','check','online_transfer') DEFAULT NULL,
     `payment_details` TEXT DEFAULT NULL,
     `auth_rep_name` VARCHAR(100) DEFAULT NULL,
@@ -32,6 +32,8 @@ CREATE TABLE IF NOT EXISTS `users` (
     `freezer_size` VARCHAR(50) DEFAULT NULL,
     `freezer_serial` VARCHAR(100) DEFAULT NULL,
     `freezer_status` VARCHAR(50) DEFAULT NULL,
+    `nao_name` VARCHAR(100) DEFAULT NULL,
+    `salesman_name` VARCHAR(100) DEFAULT NULL,
     `registered_by` INT DEFAULT NULL,
     `agent_id` INT DEFAULT NULL,
     `status` ENUM('active','inactive') NOT NULL DEFAULT 'active',
@@ -134,6 +136,18 @@ CREATE TABLE IF NOT EXISTS `electric_subsidy` (
     UNIQUE KEY `user_month_year` (`user_id`, `month`, `year`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS `packages` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(100) NOT NULL,
+    `slug` VARCHAR(100) NOT NULL UNIQUE,
+    `description` TEXT DEFAULT NULL,
+    `status` ENUM('active','inactive') DEFAULT 'active',
+    `subsidy_rate` DECIMAL(5,4) DEFAULT 0.0000,
+    `subsidy_min_orders` DECIMAL(12,2) DEFAULT 0.00,
+    `sort_order` INT DEFAULT 0,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS `settings` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `setting_key` VARCHAR(50) NOT NULL UNIQUE,
@@ -195,6 +209,12 @@ INSERT INTO `product_flavors` (`product_id`, `flavor_name`, `sort_order`) VALUES
 (15, 'Rocky Road', 1), (15, 'Cookies ''N Cream', 2), (15, 'Double Dutch', 3), (15, 'Fruit Salad', 4), (15, 'Keso', 5), (15, 'Choco Double Dutch', 6), (15, 'Mocha Coffee', 7), (15, 'Ube Keso', 8),
 (16, 'Butterscotch', 1), (16, 'Chocolate', 2), (16, 'Mango Plain', 3), (16, 'Mango Royale', 4), (16, 'Rocky Road', 5), (16, 'Cookies ''N Cream', 6), (16, 'Double Dutch', 7), (16, 'Bubble Berry', 8), (16, 'Fruit Salad', 9);
 
+-- Packages
+INSERT INTO `packages` (`name`, `slug`, `subsidy_rate`, `subsidy_min_orders`, `sort_order`) VALUES
+('Starter Pack', 'starter_pack', 0.0200, 8000.00, 1),
+('Premium Pack', 'premium_pack', 0.0300, 15000.00, 2),
+('Ice Cream House', 'ice_cream_house', 0.0500, 100000.00, 3);
+
 -- Settings
 INSERT INTO `settings` (`setting_key`, `setting_value`) VALUES
 ('efunds_discount_percent', '0'),
@@ -204,4 +224,5 @@ INSERT INTO `settings` (`setting_key`, `setting_value`) VALUES
 ('company_name', 'JMC FOODIES ICE CREAM DISTRIBUTIONS'),
 ('company_address', 'Blk 2 Lot 34 City Homes Subdivision Nancatyasan Urdaneta City, Pangasinan'),
 ('company_tin', '000-420-482-187'),
-('company_hotline', '+63 991 802 1964');
+('company_hotline', '+63 991 802 1964'),
+('agent_subsidy_min_orders', '8000');

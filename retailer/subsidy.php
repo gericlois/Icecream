@@ -27,8 +27,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['convert'])) {
             $stmt->execute();
             $stmt->close();
 
+            $rate_pct = round($subsidy['rate'] * 100, 1);
             credit_efunds($conn, $uid, $subsidy['subsidy'], 'subsidy', 'subsidy', null,
-                'Electric subsidy for ' . date('F Y') . ' (' . format_currency($subsidy['total']) . ' x 0.88 x 5%)');
+                'Electric subsidy for ' . date('F Y') . ' (' . format_currency($subsidy['total']) . ' x ' . $subsidy['factor'] . ' x ' . $rate_pct . '%)');
 
             flash_message('success', 'Subsidy of ' . format_currency($subsidy['subsidy']) . ' converted to e-funds!');
         } else {
@@ -64,8 +65,15 @@ require_once '../includes/sidebar.php';
                         <h6><i class="material-icons align-middle">bolt</i> Electric Subsidy - <?php echo date('F Y'); ?></h6>
                     </div>
                     <div class="card-body">
-                        <p class="text-sm">Earn 5% electric subsidy when your monthly delivered orders reach <?php echo format_currency($subsidy['min']); ?>.</p>
-                        <p class="text-sm mb-1"><strong>Formula:</strong> Total Orders x 0.88 x 5%</p>
+                        <?php if ($subsidy['package']): ?>
+                        <p class="text-sm">
+                            Your package: <strong><?php echo sanitize($subsidy['package']); ?></strong> —
+                            Earn <?php echo round($subsidy['rate'] * 100, 1); ?>% electric subsidy when your monthly delivered orders reach <?php echo format_currency($subsidy['min']); ?>.
+                        </p>
+                        <p class="text-sm mb-1"><strong>Formula:</strong> Total Orders x <?php echo $subsidy['factor']; ?> x <?php echo round($subsidy['rate'] * 100, 1); ?>%</p>
+                        <?php else: ?>
+                        <div class="alert alert-warning text-white text-sm">No package assigned to your account. Please contact admin to set your package for subsidy eligibility.</div>
+                        <?php endif; ?>
 
                         <hr>
                         <div class="row text-center mb-3">
@@ -85,6 +93,7 @@ require_once '../includes/sidebar.php';
                             </div>
                         </div>
 
+                        <?php if ($subsidy['min'] > 0): ?>
                         <!-- Progress bar -->
                         <div class="progress subsidy-progress mb-3">
                             <div class="progress-bar bg-gradient-<?php echo $subsidy['eligible'] ? 'success' : 'warning'; ?>"
@@ -92,6 +101,7 @@ require_once '../includes/sidebar.php';
                                 <?php echo round(($subsidy['total'] / $subsidy['min']) * 100, 1); ?>%
                             </div>
                         </div>
+                        <?php endif; ?>
 
                         <?php if ($subsidy['eligible']): ?>
                             <?php if ($already_converted): ?>
