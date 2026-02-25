@@ -16,7 +16,7 @@ require_once 'config/constants.php';
     <link rel="icon" type="image/png" href="<?php echo BASE_URL; ?>/assets/img/icons/icon-96x96.png">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: linear-gradient(195deg, #42424a 0%, #191919 100%); min-height: 100vh; }
+        body { font-family: 'Inter', sans-serif; background: #ffffff; min-height: 100vh; }
 
         .hero {
             min-height: 100vh;
@@ -26,7 +26,7 @@ require_once 'config/constants.php';
             justify-content: center;
             padding: 2rem 1rem;
             text-align: center;
-            color: #fff;
+            color: #333;
         }
 
         .app-icon {
@@ -46,7 +46,7 @@ require_once 'config/constants.php';
         }
         .hero .tagline {
             font-size: 1rem;
-            color: rgba(255,255,255,0.7);
+            color: #666;
             margin-bottom: 2rem;
         }
 
@@ -59,7 +59,7 @@ require_once 'config/constants.php';
             margin-bottom: 2.5rem;
         }
         .feature-item {
-            background: rgba(255,255,255,0.08);
+            background: #f5f5f5;
             border-radius: 12px;
             padding: 1rem;
             text-align: center;
@@ -76,7 +76,7 @@ require_once 'config/constants.php';
         }
         .feature-item p {
             font-size: 0.7rem;
-            color: rgba(255,255,255,0.6);
+            color: #888;
             line-height: 1.3;
         }
 
@@ -105,7 +105,7 @@ require_once 'config/constants.php';
         .install-btn .material-icons { font-size: 22px; }
 
         .login-link {
-            color: rgba(255,255,255,0.6);
+            color: #888;
             text-decoration: none;
             font-size: 0.85rem;
             margin-bottom: 2rem;
@@ -115,7 +115,7 @@ require_once 'config/constants.php';
         .instructions {
             max-width: 400px;
             width: 100%;
-            background: rgba(255,255,255,0.05);
+            background: #f5f5f5;
             border-radius: 12px;
             padding: 1.5rem;
             margin-bottom: 1.5rem;
@@ -137,7 +137,7 @@ require_once 'config/constants.php';
         }
         .step-num {
             background: #E91E63;
-            color: #fff;
+            color: #ffffff;
             width: 24px;
             height: 24px;
             border-radius: 50%;
@@ -150,13 +150,13 @@ require_once 'config/constants.php';
         }
         .step-text {
             font-size: 0.8rem;
-            color: rgba(255,255,255,0.8);
+            color: #555;
             line-height: 1.4;
         }
 
         .footer-text {
             font-size: 0.75rem;
-            color: rgba(255,255,255,0.4);
+            color: #999;
             line-height: 1.5;
         }
 
@@ -199,12 +199,12 @@ require_once 'config/constants.php';
         </div>
 
         <!-- Download APK Button -->
-        <a href="<?php echo BASE_URL; ?>/downloads/jmc-foodies.apk" class="install-btn" download>
+        <a href="https://drive.google.com/uc?export=download&id=1EEixO_pxrb3WimuFj9dRi_6CJ5Gs0ZDI" class="install-btn">
             <i class="material-icons">android</i>
             Download for Android
         </a>
 
-        <p style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-bottom:1.5rem;">Version 1.0 &bull; APK File</p>
+        <p style="font-size:0.8rem;color:#999;margin-bottom:1.5rem;">Version 1.0 &bull; APK File</p>
 
         <a href="<?php echo BASE_URL; ?>/index.php" class="login-link">Already have access? Sign in here</a>
 
