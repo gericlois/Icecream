@@ -61,7 +61,7 @@ if (isset($_SESSION['login_error'])) {
                             <button type="submit" class="btn bg-gradient-primary w-100 my-4 mb-2">Sign In</button>
                         </div>
                         <p class="text-center text-sm mt-2 mb-0">
-                            New retailer? <a href="<?php echo BASE_URL; ?>/register.php" class="text-primary font-weight-bold">Sign Up here</a>
+                            Contact your agent or admin to register.
                         </p>
                     </form>
                 </div>

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 24, 2026 at 09:55 PM
+-- Generation Time: Feb 25, 2026 at 01:51 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -53,6 +53,24 @@ CREATE TABLE `electric_subsidy` (
   `year` int(11) NOT NULL,
   `total_orders_amount` decimal(12,2) NOT NULL,
   `subsidy_amount` decimal(12,2) NOT NULL,
+  `converted` tinyint(1) NOT NULL DEFAULT 0,
+  `converted_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `freezer_allowance`
+--
+
+CREATE TABLE `freezer_allowance` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `month` int(11) NOT NULL,
+  `year` int(11) NOT NULL,
+  `total_orders_amount` decimal(12,2) NOT NULL,
+  `allowance_amount` decimal(12,2) NOT NULL,
   `converted` tinyint(1) NOT NULL DEFAULT 0,
   `converted_at` datetime DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp()
@@ -118,6 +136,7 @@ CREATE TABLE `packages` (
   `status` enum('active','inactive') DEFAULT 'active',
   `subsidy_rate` decimal(5,4) DEFAULT 0.0000,
   `subsidy_min_orders` decimal(12,2) DEFAULT 0.00,
+  `freezer_display_allowance` decimal(12,2) DEFAULT 0.00,
   `sort_order` int(11) DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -126,10 +145,10 @@ CREATE TABLE `packages` (
 -- Dumping data for table `packages`
 --
 
-INSERT INTO `packages` (`id`, `name`, `slug`, `description`, `status`, `subsidy_rate`, `subsidy_min_orders`, `sort_order`, `created_at`) VALUES
-(1, 'Starter Pack', 'starter_pack', NULL, 'active', 0.0200, 8000.00, 1, '2026-02-23 20:36:24'),
-(2, 'Premium Pack', 'premium_pack', NULL, 'active', 0.0300, 15000.00, 2, '2026-02-23 20:36:24'),
-(3, 'Ice Cream House', 'ice_cream_house', NULL, 'active', 0.0500, 100000.00, 3, '2026-02-23 21:19:45');
+INSERT INTO `packages` (`id`, `name`, `slug`, `description`, `status`, `subsidy_rate`, `subsidy_min_orders`, `freezer_display_allowance`, `sort_order`, `created_at`) VALUES
+(1, 'Starter Pack', 'starter_pack', NULL, 'active', 0.0200, 8000.00, 300.00, 1, '2026-02-23 20:36:24'),
+(2, 'Premium Pack', 'premium_pack', NULL, 'active', 0.0300, 15000.00, 600.00, 2, '2026-02-23 20:36:24'),
+(3, 'Ice Cream House', 'ice_cream_house', NULL, 'active', 0.0500, 100000.00, 1000.00, 3, '2026-02-23 21:19:45');
 
 -- --------------------------------------------------------
 
@@ -288,7 +307,8 @@ INSERT INTO `settings` (`id`, `setting_key`, `setting_value`, `updated_at`) VALU
 (6, 'company_address', 'Blk 2 Lot 34 City Homes Subdivision Nancatyasan Urdaneta City, Pangasinan', '2026-02-18 02:05:46'),
 (7, 'company_tin', '000-420-482-187', '2026-02-18 02:05:46'),
 (8, 'company_hotline', '+63 991 802 1964', '2026-02-18 02:05:46'),
-(9, 'agent_subsidy_min_orders', '8000', '2026-02-23 21:05:07');
+(9, 'agent_subsidy_min_orders', '8000', '2026-02-23 21:05:07'),
+(10, 'fda_min_orders', '8000', '2026-02-24 18:51:26');
 
 -- --------------------------------------------------------
 
@@ -360,6 +380,13 @@ ALTER TABLE `efunds_transactions`
 -- Indexes for table `electric_subsidy`
 --
 ALTER TABLE `electric_subsidy`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_month_year` (`user_id`,`month`,`year`);
+
+--
+-- Indexes for table `freezer_allowance`
+--
+ALTER TABLE `freezer_allowance`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `user_month_year` (`user_id`,`month`,`year`);
 
@@ -442,6 +469,12 @@ ALTER TABLE `electric_subsidy`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `freezer_allowance`
+--
+ALTER TABLE `freezer_allowance`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
@@ -481,7 +514,7 @@ ALTER TABLE `reload_requests`
 -- AUTO_INCREMENT for table `settings`
 --
 ALTER TABLE `settings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -505,6 +538,12 @@ ALTER TABLE `efunds_transactions`
 --
 ALTER TABLE `electric_subsidy`
   ADD CONSTRAINT `electric_subsidy_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+
+--
+-- Constraints for table `freezer_allowance`
+--
+ALTER TABLE `freezer_allowance`
+  ADD CONSTRAINT `freezer_allowance_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
 
 --
 -- Constraints for table `orders`

@@ -199,6 +199,14 @@
                     <span class="nav-link-text ms-1">Electric Subsidy</span>
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link text-white <?php echo ($active_page ?? '') === 'fda' ? 'active sidebar-active' : ''; ?>" href="<?php echo BASE_URL; ?>/retailer/fda.php">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="material-icons opacity-10">ac_unit</i>
+                    </div>
+                    <span class="nav-link-text ms-1">Freezer Allowance</span>
+                </a>
+            </li>
 <?php endif; ?>
 
             <li class="nav-item mt-3">

@@ -22,6 +22,11 @@ $recent = $conn->query("SELECT * FROM orders WHERE user_id = $uid ORDER BY creat
 $month = (int)date('m');
 $year = (int)date('Y');
 $subsidy = calculate_subsidy($conn, $uid, $month, $year);
+$fda = calculate_fda($conn, $uid, $month, $year);
+
+// Order counts
+$pending_orders = (int)$conn->query("SELECT COUNT(*) as cnt FROM orders WHERE user_id = $uid AND status IN ('pending','approved','for_delivery')")->fetch_assoc()['cnt'];
+$delivered_orders = (int)$conn->query("SELECT COUNT(*) as cnt FROM orders WHERE user_id = $uid AND status = 'delivered'")->fetch_assoc()['cnt'];
 
 require_once '../includes/header.php';
 require_once '../includes/sidebar.php';
@@ -35,59 +40,185 @@ require_once '../includes/sidebar.php';
 
         <!-- Welcome & Balance -->
         <div class="row">
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="card">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <a href="<?php echo BASE_URL; ?>/retailer/efunds.php" class="text-decoration-none">
+                <div class="card" style="cursor:pointer;">
                     <div class="card-header p-3 pt-2">
                         <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
                             <i class="material-icons opacity-10">account_balance_wallet</i>
                         </div>
                         <div class="text-end pt-1">
-                            <p class="text-sm mb-0">E-Funds Balance</p>
-                            <h4 class="mb-0"><?php echo format_currency($user['efunds_balance']); ?></h4>
+                            <p class="text-sm mb-0 text-secondary">E-Funds Balance</p>
+                            <h4 class="mb-0 text-dark"><?php echo format_currency($user['efunds_balance']); ?></h4>
                         </div>
                     </div>
                     <hr class="dark horizontal my-0">
                     <div class="card-footer p-3">
-                        <a href="<?php echo BASE_URL; ?>/retailer/reload.php" class="text-sm text-primary">Reload E-Funds &rarr;</a>
+                        <span class="text-sm text-primary">View E-Funds &rarr;</span>
                     </div>
                 </div>
+                </a>
             </div>
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="card">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <a href="<?php echo BASE_URL; ?>/retailer/orders.php" class="text-decoration-none">
+                <div class="card" style="cursor:pointer;">
                     <div class="card-header p-3 pt-2">
                         <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute">
-                            <i class="material-icons opacity-10">bolt</i>
+                            <i class="material-icons opacity-10">pending_actions</i>
                         </div>
                         <div class="text-end pt-1">
-                            <p class="text-sm mb-0">Electric Subsidy</p>
-                            <h4 class="mb-0"><?php echo $subsidy['eligible'] ? format_currency($subsidy['subsidy']) : 'Not yet'; ?></h4>
+                            <p class="text-sm mb-0 text-secondary">Pending Orders</p>
+                            <h4 class="mb-0 text-dark"><?php echo $pending_orders; ?></h4>
                         </div>
                     </div>
                     <hr class="dark horizontal my-0">
                     <div class="card-footer p-3">
-                        <div class="progress" style="height: 6px;">
-                            <div class="progress-bar bg-gradient-warning" style="width: <?php echo min(100, ($subsidy['total'] / $subsidy['min']) * 100); ?>%"></div>
-                        </div>
-                        <small class="text-xs"><?php echo format_currency($subsidy['total']); ?> / <?php echo format_currency($subsidy['min']); ?> min orders</small>
+                        <span class="text-sm text-primary">View Orders &rarr;</span>
                     </div>
                 </div>
+                </a>
             </div>
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="card">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <a href="<?php echo BASE_URL; ?>/retailer/orders.php" class="text-decoration-none">
+                <div class="card" style="cursor:pointer;">
+                    <div class="card-header p-3 pt-2">
+                        <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
+                            <i class="material-icons opacity-10">local_shipping</i>
+                        </div>
+                        <div class="text-end pt-1">
+                            <p class="text-sm mb-0 text-secondary">Delivered Orders</p>
+                            <h4 class="mb-0 text-dark"><?php echo $delivered_orders; ?></h4>
+                        </div>
+                    </div>
+                    <hr class="dark horizontal my-0">
+                    <div class="card-footer p-3">
+                        <span class="text-sm text-primary">View Orders &rarr;</span>
+                    </div>
+                </div>
+                </a>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <a href="<?php echo BASE_URL; ?>/retailer/catalog.php" class="text-decoration-none">
+                <div class="card" style="cursor:pointer;">
                     <div class="card-header p-3 pt-2">
                         <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary text-center border-radius-xl mt-n4 position-absolute">
                             <i class="material-icons opacity-10">storefront</i>
                         </div>
                         <div class="text-end pt-1">
-                            <p class="text-sm mb-0">Quick Action</p>
-                            <h5 class="mb-0">Order Now</h5>
+                            <p class="text-sm mb-0 text-secondary">Quick Action</p>
+                            <h5 class="mb-0 text-dark">Order Now</h5>
                         </div>
                     </div>
                     <hr class="dark horizontal my-0">
                     <div class="card-footer p-3">
-                        <a href="<?php echo BASE_URL; ?>/retailer/catalog.php" class="text-sm text-primary">Browse Catalog &rarr;</a>
+                        <span class="text-sm text-primary">Browse Catalog &rarr;</span>
                     </div>
                 </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Freezer Display Allowance Module -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <a href="<?php echo BASE_URL; ?>/retailer/fda.php" class="text-decoration-none">
+                <div class="card" style="cursor:pointer;">
+                    <div class="card-header pb-0">
+                        <div class="d-flex align-items-center">
+                            <i class="material-icons text-info me-2">ac_unit</i>
+                            <h6 class="mb-0">Freezer Display Allowance - <?php echo date('F Y'); ?></h6>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <?php if ($fda['package']): ?>
+                        <p class="text-sm mb-2">
+                            Package: <strong><?php echo sanitize($fda['package']); ?></strong> &mdash;
+                            <?php echo format_currency($fda['allowance']); ?>/month
+                        </p>
+                        <div class="row text-center mb-2">
+                            <div class="col-6">
+                                <p class="text-xs text-secondary mb-0">Your Orders</p>
+                                <h5 class="mb-0"><?php echo format_currency($fda['total']); ?></h5>
+                            </div>
+                            <div class="col-6">
+                                <p class="text-xs text-secondary mb-0">Minimum Required</p>
+                                <h5 class="mb-0"><?php echo format_currency($fda['min']); ?></h5>
+                            </div>
+                        </div>
+                        <?php if ($fda['min'] > 0): ?>
+                        <div class="progress mb-2" style="height: 8px;">
+                            <div class="progress-bar bg-gradient-<?php echo $fda['eligible'] ? 'success' : 'info'; ?>"
+                                 style="width: <?php echo min(100, ($fda['total'] / $fda['min']) * 100); ?>%"></div>
+                        </div>
+                        <p class="text-xs text-center mb-2"><?php echo round(($fda['total'] / $fda['min']) * 100, 1); ?>% of quota</p>
+                        <?php endif; ?>
+                        <?php if ($fda['eligible']): ?>
+                        <div class="alert alert-success text-white text-sm py-2 mb-0">
+                            <i class="material-icons align-middle text-sm">check_circle</i>
+                            Qualified! <?php echo format_currency($fda['allowance']); ?> allowance available.
+                            <a href="<?php echo BASE_URL; ?>/retailer/fda.php" class="text-white text-decoration-underline ms-1">Convert now &rarr;</a>
+                        </div>
+                        <?php else: ?>
+                        <div class="alert alert-light text-sm py-2 mb-0 border">
+                            <?php echo format_currency($fda['min'] - $fda['total']); ?> more in orders to qualify.
+                        </div>
+                        <?php endif; ?>
+                        <?php else: ?>
+                        <p class="text-sm text-muted mb-0">No package assigned. Contact admin for FDA eligibility.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                </a>
+            </div>
+            <div class="col-md-6">
+                <a href="<?php echo BASE_URL; ?>/retailer/subsidy.php" class="text-decoration-none">
+                <div class="card" style="cursor:pointer;">
+                    <div class="card-header pb-0">
+                        <div class="d-flex align-items-center">
+                            <i class="material-icons text-warning me-2">bolt</i>
+                            <h6 class="mb-0">Electric Subsidy - <?php echo date('F Y'); ?></h6>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <?php if ($subsidy['package']): ?>
+                        <p class="text-sm mb-2">
+                            Package: <strong><?php echo sanitize($subsidy['package']); ?></strong> &mdash;
+                            <?php echo round($subsidy['rate'] * 100, 1); ?>% rate
+                        </p>
+                        <div class="row text-center mb-2">
+                            <div class="col-6">
+                                <p class="text-xs text-secondary mb-0">Your Orders</p>
+                                <h5 class="mb-0"><?php echo format_currency($subsidy['total']); ?></h5>
+                            </div>
+                            <div class="col-6">
+                                <p class="text-xs text-secondary mb-0">Minimum Required</p>
+                                <h5 class="mb-0"><?php echo format_currency($subsidy['min']); ?></h5>
+                            </div>
+                        </div>
+                        <?php if ($subsidy['min'] > 0): ?>
+                        <div class="progress mb-2" style="height: 8px;">
+                            <div class="progress-bar bg-gradient-<?php echo $subsidy['eligible'] ? 'success' : 'warning'; ?>"
+                                 style="width: <?php echo min(100, ($subsidy['total'] / $subsidy['min']) * 100); ?>%"></div>
+                        </div>
+                        <p class="text-xs text-center mb-2"><?php echo round(($subsidy['total'] / $subsidy['min']) * 100, 1); ?>% of quota</p>
+                        <?php endif; ?>
+                        <?php if ($subsidy['eligible']): ?>
+                        <div class="alert alert-success text-white text-sm py-2 mb-0">
+                            <i class="material-icons align-middle text-sm">check_circle</i>
+                            Qualified! <?php echo format_currency($subsidy['subsidy']); ?> subsidy available.
+                            <a href="<?php echo BASE_URL; ?>/retailer/subsidy.php" class="text-white text-decoration-underline ms-1">Convert now &rarr;</a>
+                        </div>
+                        <?php else: ?>
+                        <div class="alert alert-light text-sm py-2 mb-0 border">
+                            <?php echo format_currency($subsidy['min'] - $subsidy['total']); ?> more in orders to qualify.
+                        </div>
+                        <?php endif; ?>
+                        <?php else: ?>
+                        <p class="text-sm text-muted mb-0">No package assigned. Contact admin for subsidy eligibility.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                </a>
             </div>
         </div>
 

@@ -112,6 +112,46 @@ function calculate_subsidy($conn, $user_id, $month, $year) {
     return ['eligible' => true, 'total' => $total, 'subsidy' => $subsidy, 'min' => $min, 'rate' => $rate, 'factor' => $factor, 'package' => $package_name];
 }
 
+function calculate_fda($conn, $user_id, $month, $year) {
+    // Get total delivered orders for this user/month
+    $stmt = $conn->prepare("
+        SELECT COALESCE(SUM(total_amount), 0) as total
+        FROM orders
+        WHERE user_id = ? AND status = 'delivered'
+          AND MONTH(delivered_at) = ? AND YEAR(delivered_at) = ?
+    ");
+    $stmt->bind_param("iii", $user_id, $month, $year);
+    $stmt->execute();
+    $total = (float)$stmt->get_result()->fetch_assoc()['total'];
+    $stmt->close();
+
+    // Get user's package freezer display allowance
+    $stmt = $conn->prepare("
+        SELECT p.freezer_display_allowance, p.name as package_name
+        FROM users u
+        JOIN packages p ON u.package_info = p.slug
+        WHERE u.id = ?
+    ");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $pkg = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    $min = (float)(get_setting($conn, 'fda_min_orders') ?: 8000);
+
+    if (!$pkg || $pkg['freezer_display_allowance'] <= 0) {
+        return ['eligible' => false, 'total' => $total, 'allowance' => 0, 'min' => $min, 'package' => null];
+    }
+
+    $allowance = (float)$pkg['freezer_display_allowance'];
+    $package_name = $pkg['package_name'];
+
+    if ($total < $min) {
+        return ['eligible' => false, 'total' => $total, 'allowance' => $allowance, 'min' => $min, 'package' => $package_name];
+    }
+    return ['eligible' => true, 'total' => $total, 'allowance' => $allowance, 'min' => $min, 'package' => $package_name];
+}
+
 function credit_efunds($conn, $user_id, $amount, $type, $ref_type, $ref_id, $description, $processed_by = null) {
     $conn->begin_transaction();
     try {

@@ -61,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete'])) {
     $status = ($_POST['status'] ?? 'active') === 'inactive' ? 'inactive' : 'active';
     $subsidy_rate = (float)($_POST['subsidy_rate'] ?? 0) / 100; // Convert % to decimal
     $subsidy_min_orders = (float)($_POST['subsidy_min_orders'] ?? 0);
+    $freezer_display_allowance = (float)($_POST['freezer_display_allowance'] ?? 0);
 
     // Auto-generate slug from name if empty
     if (empty($slug) && !empty($name)) {
@@ -89,11 +90,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete'])) {
 
         if (empty($error)) {
             if ($id > 0) {
-                $stmt = $conn->prepare("UPDATE packages SET name=?, slug=?, description=?, sort_order=?, status=?, subsidy_rate=?, subsidy_min_orders=? WHERE id=?");
-                $stmt->bind_param("sssisddi", $name, $slug, $description, $sort_order, $status, $subsidy_rate, $subsidy_min_orders, $id);
+                $stmt = $conn->prepare("UPDATE packages SET name=?, slug=?, description=?, sort_order=?, status=?, subsidy_rate=?, subsidy_min_orders=?, freezer_display_allowance=? WHERE id=?");
+                $stmt->bind_param("sssisdddi", $name, $slug, $description, $sort_order, $status, $subsidy_rate, $subsidy_min_orders, $freezer_display_allowance, $id);
             } else {
-                $stmt = $conn->prepare("INSERT INTO packages (name, slug, description, sort_order, status, subsidy_rate, subsidy_min_orders) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                $stmt->bind_param("sssisdd", $name, $slug, $description, $sort_order, $status, $subsidy_rate, $subsidy_min_orders);
+                $stmt = $conn->prepare("INSERT INTO packages (name, slug, description, sort_order, status, subsidy_rate, subsidy_min_orders, freezer_display_allowance) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->bind_param("sssisddd", $name, $slug, $description, $sort_order, $status, $subsidy_rate, $subsidy_min_orders, $freezer_display_allowance);
             }
             $stmt->execute();
             $stmt->close();
@@ -176,6 +177,18 @@ require_once '../includes/sidebar.php';
                                         <input type="number" name="subsidy_min_orders" class="form-control" value="<?php echo $package['subsidy_min_orders'] ?? 0; ?>" step="1" min="0">
                                     </div>
                                     <p class="text-xs text-muted mt-n2">Minimum delivered orders to qualify for subsidy</p>
+                                </div>
+                            </div>
+
+                            <h6 class="text-uppercase text-secondary text-xs font-weight-bolder mt-4 mb-2">Freezer Display Allowance</h6>
+                            <hr class="horizontal dark mt-0 mb-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="input-group input-group-outline is-filled my-3">
+                                        <label class="form-label">Allowance Amount (₱/month)</label>
+                                        <input type="number" name="freezer_display_allowance" class="form-control" value="<?php echo $package['freezer_display_allowance'] ?? 0; ?>" step="1" min="0">
+                                    </div>
+                                    <p class="text-xs text-muted mt-n2">Fixed monthly allowance when retailer meets order quota</p>
                                 </div>
                             </div>
 

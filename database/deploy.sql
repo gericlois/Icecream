@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS `order_items` (
 CREATE TABLE IF NOT EXISTS `efunds_transactions` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `user_id` INT NOT NULL,
-    `type` ENUM('reload','payment','subsidy','adjustment') NOT NULL,
+    `type` ENUM('reload','payment','subsidy','adjustment','fda') NOT NULL,
     `amount` DECIMAL(12,2) NOT NULL,
     `balance_after` DECIMAL(12,2) NOT NULL,
     `reference_type` VARCHAR(30) DEFAULT NULL,
@@ -144,8 +144,23 @@ CREATE TABLE IF NOT EXISTS `packages` (
     `status` ENUM('active','inactive') DEFAULT 'active',
     `subsidy_rate` DECIMAL(5,4) DEFAULT 0.0000,
     `subsidy_min_orders` DECIMAL(12,2) DEFAULT 0.00,
+    `freezer_display_allowance` DECIMAL(12,2) DEFAULT 0.00,
     `sort_order` INT DEFAULT 0,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `freezer_allowance` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL,
+    `month` INT NOT NULL,
+    `year` INT NOT NULL,
+    `total_orders_amount` DECIMAL(12,2) NOT NULL,
+    `allowance_amount` DECIMAL(12,2) NOT NULL,
+    `converted` TINYINT(1) NOT NULL DEFAULT 0,
+    `converted_at` DATETIME DEFAULT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY `user_month_year` (`user_id`, `month`, `year`),
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `settings` (
@@ -210,10 +225,10 @@ INSERT INTO `product_flavors` (`product_id`, `flavor_name`, `sort_order`) VALUES
 (16, 'Butterscotch', 1), (16, 'Chocolate', 2), (16, 'Mango Plain', 3), (16, 'Mango Royale', 4), (16, 'Rocky Road', 5), (16, 'Cookies ''N Cream', 6), (16, 'Double Dutch', 7), (16, 'Bubble Berry', 8), (16, 'Fruit Salad', 9);
 
 -- Packages
-INSERT INTO `packages` (`name`, `slug`, `subsidy_rate`, `subsidy_min_orders`, `sort_order`) VALUES
-('Starter Pack', 'starter_pack', 0.0200, 8000.00, 1),
-('Premium Pack', 'premium_pack', 0.0300, 15000.00, 2),
-('Ice Cream House', 'ice_cream_house', 0.0500, 100000.00, 3);
+INSERT INTO `packages` (`name`, `slug`, `subsidy_rate`, `subsidy_min_orders`, `freezer_display_allowance`, `sort_order`) VALUES
+('Starter Pack', 'starter_pack', 0.0200, 8000.00, 300.00, 1),
+('Premium Pack', 'premium_pack', 0.0300, 15000.00, 600.00, 2),
+('Ice Cream House', 'ice_cream_house', 0.0500, 100000.00, 1000.00, 3);
 
 -- Settings
 INSERT INTO `settings` (`setting_key`, `setting_value`) VALUES
@@ -225,4 +240,5 @@ INSERT INTO `settings` (`setting_key`, `setting_value`) VALUES
 ('company_address', 'Blk 2 Lot 34 City Homes Subdivision Nancatyasan Urdaneta City, Pangasinan'),
 ('company_tin', '000-420-482-187'),
 ('company_hotline', '+63 991 802 1964'),
-('agent_subsidy_min_orders', '8000');
+('agent_subsidy_min_orders', '8000'),
+('fda_min_orders', '8000');

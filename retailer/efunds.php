@@ -37,7 +37,7 @@ require_once '../includes/sidebar.php';
                     <div class="card-body text-center text-white p-4">
                         <i class="material-icons" style="font-size:48px;">account_balance_wallet</i>
                         <p class="text-sm mb-1 opacity-8">Current Balance</p>
-                        <h2 class="mb-3"><?php echo format_currency($user['efunds_balance']); ?></h2>
+                        <h2 class="mb-3 text-white"><?php echo format_currency($user['efunds_balance']); ?></h2>
                         <a href="<?php echo BASE_URL; ?>/retailer/reload.php" class="btn btn-white btn-sm">
                             <i class="material-icons text-sm">add</i> Reload E-Funds
                         </a>
