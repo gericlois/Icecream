@@ -138,7 +138,7 @@
                     <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="material-icons opacity-10">add_shopping_cart</i>
                     </div>
-                    <span class="nav-link-text ms-1">New Order</span>
+                    <span class="nav-link-text ms-1">Create New Order for Retailers</span>
                 </a>
             </li>
             <li class="nav-item">
@@ -146,7 +146,7 @@
                     <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="material-icons opacity-10">bolt</i>
                     </div>
-                    <span class="nav-link-text ms-1">My Over-Ride</span>
+                    <span class="nav-link-text ms-1">My Gross Retail Over-Ride</span>
                 </a>
             </li>
 

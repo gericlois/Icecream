@@ -25,13 +25,14 @@ $r = $conn->query("
 ")->fetch_assoc();
 $pending_orders = $r['cnt'];
 
-// Gross sales to-date (all delivered orders, all time)
+// Current Monthly Gross Sales (resets every 1st of the month)
 $r = $conn->query("
     SELECT COALESCE(SUM(total_amount), 0) as total FROM orders
     WHERE status = 'delivered'
     AND (agent_id = $uid OR user_id IN (SELECT id FROM users WHERE agent_id = $uid))
+    AND MONTH(delivered_at) = $month AND YEAR(delivered_at) = $year
 ")->fetch_assoc();
-$gross_sales = $r['total'];
+$monthly_gross_sales = $r['total'];
 
 // Total orders
 $r = $conn->query("
@@ -98,8 +99,8 @@ require_once '../includes/sidebar.php';
                             <i class="material-icons opacity-10">payments</i>
                         </div>
                         <div class="text-end pt-1">
-                            <p class="text-sm mb-0">Gross Sales To-Date</p>
-                            <h4 class="mb-0"><?php echo format_currency($gross_sales); ?></h4>
+                            <p class="text-sm mb-0">Current Monthly Gross Sales</p>
+                            <h4 class="mb-0"><?php echo format_currency($monthly_gross_sales); ?></h4>
                         </div>
                     </div>
                 </div>
@@ -132,14 +133,14 @@ require_once '../includes/sidebar.php';
             </div>
         </div>
 
-        <!-- Over-Ride Quota + Delivery Window -->
+        <!-- Gross Retail Over-Ride + Delivery Window -->
         <div class="row mb-4">
             <div class="col-lg-8">
                 <div class="card">
                     <div class="card-header pb-0">
                         <div class="row align-items-center">
                             <div class="col-8">
-                                <h6><i class="material-icons align-middle text-warning">bolt</i> Over-Ride Quota - <?php echo date('F Y'); ?></h6>
+                                <h6><i class="material-icons align-middle text-warning">bolt</i> Gross Retail Over-Ride - <?php echo date('F Y'); ?></h6>
                             </div>
                             <div class="col-4 text-end">
                                 <?php if ($already_converted): ?>
@@ -155,7 +156,7 @@ require_once '../includes/sidebar.php';
                     <div class="card-body">
                         <div class="d-flex justify-content-between mb-1">
                             <span class="text-sm font-weight-bold"><?php echo format_currency($subsidy['grand_total']); ?> delivered</span>
-                            <span class="text-sm text-secondary">Target: <?php echo format_currency($subsidy['min']); ?></span>
+                            <span class="text-sm text-secondary">Minimum Re-Order: <?php echo format_currency($subsidy['min']); ?> (<?php echo $subsidy['active_retailers']; ?> retailers x ₱8,000)</span>
                         </div>
                         <div class="progress mb-3" style="height: 18px; border-radius: 10px;">
                             <div class="progress-bar bg-gradient-<?php echo $subsidy['eligible'] ? 'success' : ($progress_pct >= 50 ? 'info' : 'warning'); ?>"
@@ -169,19 +170,19 @@ require_once '../includes/sidebar.php';
                         <?php if ($already_converted): ?>
                         <div class="alert alert-light text-sm mb-0 border">
                             <i class="material-icons align-middle text-success" style="font-size:18px;">check_circle</i>
-                            Over-ride of <strong><?php echo format_currency($subsidy['total_subsidy']); ?></strong> already converted to e-funds this month.
+                            Gross Retail Over-Ride of <strong><?php echo format_currency($subsidy['total_subsidy']); ?></strong> already converted to e-funds this month.
                         </div>
                         <?php elseif ($subsidy['eligible']): ?>
                         <div class="alert alert-light text-sm mb-0 border">
                             <i class="material-icons align-middle text-success" style="font-size:18px;">check_circle</i>
-                            Quota reached! Your over-ride of <strong><?php echo format_currency($subsidy['total_subsidy']); ?></strong> is ready.
+                            Minimum re-order reached! Your Gross Retail Over-Ride of <strong><?php echo format_currency($subsidy['total_subsidy']); ?></strong> is ready.
                             <a href="<?php echo BASE_URL; ?>/agent/subsidy.php" class="text-primary font-weight-bold">Convert to E-Funds &rarr;</a>
                         </div>
                         <?php else: ?>
                         <div class="alert alert-light text-sm mb-0 border">
                             <i class="material-icons align-middle text-warning" style="font-size:18px;">info</i>
                             <strong><?php echo format_currency($remaining); ?></strong> more in delivered retailer orders needed to qualify.
-                            <a href="<?php echo BASE_URL; ?>/agent/earnings.php" class="text-primary font-weight-bold">View Details &rarr;</a>
+                            <a href="<?php echo BASE_URL; ?>/agent/earnings.php" class="text-primary font-weight-bold">View Details - Gross Retail Over-Ride &rarr;</a>
                         </div>
                         <?php endif; ?>
                     </div>
@@ -215,7 +216,7 @@ require_once '../includes/sidebar.php';
                                 <i class="material-icons opacity-10 text-white">bolt</i>
                             </div>
                             <div>
-                                <p class="text-xs text-secondary mb-0">Potential Over-Ride</p>
+                                <p class="text-xs text-secondary mb-0">Potential Gross Retail Over-Ride</p>
                                 <h5 class="mb-0"><?php echo format_currency($subsidy['eligible'] ? $subsidy['total_subsidy'] : 0); ?></h5>
                             </div>
                         </div>

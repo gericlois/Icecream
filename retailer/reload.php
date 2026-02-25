@@ -17,8 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $method = $_POST['method'] ?? '';
     $ref = trim($_POST['reference_number'] ?? '');
 
-    if ($amount <= 0 || !in_array($method, ['gcash', 'bank_transfer'])) {
-        flash_message('danger', 'Please fill in all required fields correctly.');
+    if ($amount < 500 || !in_array($method, ['gcash', 'bank_transfer'])) {
+        flash_message('danger', $amount < 500 ? 'Minimum reload amount is ₱500.00.' : 'Please fill in all required fields correctly.');
         redirect(BASE_URL . '/retailer/reload.php');
     }
 
@@ -74,8 +74,8 @@ require_once '../includes/sidebar.php';
                     <div class="card-body">
                         <form method="POST" enctype="multipart/form-data">
                             <div class="input-group input-group-outline my-3">
-                                <label class="form-label">Amount (₱) *</label>
-                                <input type="number" name="amount" class="form-control" step="0.01" min="1" required>
+                                <label class="form-label">Amount (₱) * (Min ₱500)</label>
+                                <input type="number" name="amount" class="form-control" step="0.01" min="500" required>
                             </div>
                             <div class="input-group input-group-static my-3">
                                 <label class="ms-0">Payment Method *</label>
@@ -99,9 +99,13 @@ require_once '../includes/sidebar.php';
                                 <input type="text" name="reference_number" class="form-control">
                             </div>
                             <div class="my-3">
-                                <label class="form-label d-block">Upload Proof (screenshot)</label>
-                                <input type="file" name="proof" class="form-control" accept="image/*">
-                                <small class="text-muted">JPG, PNG, GIF. Max 2MB.</small>
+                                <label class="form-label d-block mb-2">Upload Proof (screenshot)</label>
+                                <label class="btn btn-sm bg-gradient-dark mb-1" style="cursor:pointer;">
+                                    <i class="material-icons align-middle text-sm">upload_file</i> Choose File
+                                    <input type="file" name="proof" accept="image/*" style="display:none;" onchange="document.getElementById('proofFileName').textContent = this.files[0] ? this.files[0].name : 'No file chosen'">
+                                </label>
+                                <span id="proofFileName" class="text-sm text-muted ms-2">No file chosen</span>
+                                <br><small class="text-muted">JPG, PNG, GIF. Max 2MB.</small>
                             </div>
                             <button type="submit" class="btn bg-gradient-primary w-100">Submit Reload Request</button>
                         </form>

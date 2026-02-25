@@ -68,13 +68,16 @@ require_once '../includes/sidebar.php';
                 <h2 class="accordion-header" id="heading<?php echo $idx; ?>">
                     <?php $img_path = 'assetsimg/icecream/' . $product_name . '.png'; ?>
                     <button class="accordion-button <?php echo $idx === 0 ? '' : 'collapsed'; ?> py-3" type="button" data-bs-toggle="collapse" data-bs-target="#<?php echo $collapseId; ?>" aria-expanded="<?php echo $idx === 0 ? 'true' : 'false'; ?>" style="background:#fff;box-shadow:none;">
-                        <div class="d-flex align-items-center w-100">
+                        <div class="d-flex align-items-center w-100 flex-wrap">
                             <?php if (file_exists(__DIR__ . '/../' . $img_path)): ?>
                             <img src="<?php echo BASE_URL . '/' . $img_path; ?>" alt="<?php echo sanitize($product_name); ?>" class="ms-2" style="width:40px;height:40px;object-fit:contain;">
                             <?php endif; ?>
                             <strong class="text-dark ms-3"><?php echo sanitize($product_name); ?></strong>
                             <span class="ms-2 text-muted text-sm">(<?php echo $data['info']['qty_per_pack']; ?>/pack | <?php echo format_currency($data['info']['unit_price']); ?>/unit)</span>
-                            <span class="badge bg-gradient-info ms-auto me-3"><?php echo count($data['flavors']); ?> flavors</span>
+                            <span class="badge bg-gradient-primary ms-auto me-3">
+                                <i class="material-icons align-middle" style="font-size:14px;">expand_more</i>
+                                View <?php echo count($data['flavors']); ?> Flavors
+                            </span>
                         </div>
                     </button>
                 </h2>

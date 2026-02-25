@@ -31,6 +31,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         $subtotal += $item['quantity_packs'] * $item['qty_per_pack'] * $item['unit_price'];
     }
 
+    // Minimum order amount
+    if ($subtotal < 2000) {
+        flash_message('danger', 'Minimum order amount is ₱2,000.00. Your current total is ' . format_currency($subtotal) . '.');
+        redirect(BASE_URL . '/retailer/cart.php');
+    }
+
     $discount_amount = 0;
     $actual_discount_pct = 0;
     if ($payment_method === 'efunds' && $discount_pct > 0) {
@@ -201,7 +207,13 @@ require_once '../includes/sidebar.php';
                                 <input type="text" name="notes" class="form-control">
                             </div>
 
-                            <button type="submit" name="place_order" value="1" class="btn bg-gradient-success w-100" onclick="return confirm('Place this order?')">
+                            <?php if ($subtotal < 2000): ?>
+                            <div class="alert alert-warning text-white text-sm py-2 mb-3">
+                                <i class="material-icons align-middle text-sm">warning</i>
+                                Minimum order is <strong>₱2,000.00</strong>. You need <strong><?php echo format_currency(2000 - $subtotal); ?></strong> more.
+                            </div>
+                            <?php endif; ?>
+                            <button type="submit" name="place_order" value="1" class="btn bg-gradient-success w-100 <?php echo $subtotal < 2000 ? 'disabled' : ''; ?>" <?php echo $subtotal < 2000 ? 'disabled' : 'onclick="return confirm(\'Place this order?\')"'; ?>>
                                 <i class="material-icons">shopping_bag</i> Place Order
                             </button>
                             <a href="<?php echo BASE_URL; ?>/retailer/catalog.php" class="btn btn-outline-primary w-100 mt-2">Continue Shopping</a>

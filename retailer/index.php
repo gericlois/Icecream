@@ -24,9 +24,8 @@ $year = (int)date('Y');
 $subsidy = calculate_subsidy($conn, $uid, $month, $year);
 $fda = calculate_fda($conn, $uid, $month, $year);
 
-// Order counts
-$pending_orders = (int)$conn->query("SELECT COUNT(*) as cnt FROM orders WHERE user_id = $uid AND status IN ('pending','approved','for_delivery')")->fetch_assoc()['cnt'];
-$delivered_orders = (int)$conn->query("SELECT COUNT(*) as cnt FROM orders WHERE user_id = $uid AND status = 'delivered'")->fetch_assoc()['cnt'];
+// Order count (all active + delivered)
+$total_orders = (int)$conn->query("SELECT COUNT(*) as cnt FROM orders WHERE user_id = $uid AND status IN ('pending','approved','for_delivery','delivered')")->fetch_assoc()['cnt'];
 
 require_once '../includes/header.php';
 require_once '../includes/sidebar.php';
@@ -64,30 +63,11 @@ require_once '../includes/sidebar.php';
                 <div class="card" style="cursor:pointer;">
                     <div class="card-header p-3 pt-2">
                         <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute">
-                            <i class="material-icons opacity-10">pending_actions</i>
-                        </div>
-                        <div class="text-end pt-1">
-                            <p class="text-sm mb-0 text-secondary">Pending Orders</p>
-                            <h4 class="mb-0 text-dark"><?php echo $pending_orders; ?></h4>
-                        </div>
-                    </div>
-                    <hr class="dark horizontal my-0">
-                    <div class="card-footer p-3">
-                        <span class="text-sm text-primary">View Orders &rarr;</span>
-                    </div>
-                </div>
-                </a>
-            </div>
-            <div class="col-lg-3 col-md-6 mb-4">
-                <a href="<?php echo BASE_URL; ?>/retailer/orders.php" class="text-decoration-none">
-                <div class="card" style="cursor:pointer;">
-                    <div class="card-header p-3 pt-2">
-                        <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
                             <i class="material-icons opacity-10">local_shipping</i>
                         </div>
                         <div class="text-end pt-1">
-                            <p class="text-sm mb-0 text-secondary">Delivered Orders</p>
-                            <h4 class="mb-0 text-dark"><?php echo $delivered_orders; ?></h4>
+                            <p class="text-sm mb-0 text-secondary">Track Orders</p>
+                            <h4 class="mb-0 text-dark"><?php echo $total_orders; ?></h4>
                         </div>
                     </div>
                     <hr class="dark horizontal my-0">
@@ -130,28 +110,25 @@ require_once '../includes/sidebar.php';
                         </div>
                     </div>
                     <div class="card-body">
-                        <?php if ($fda['package']): ?>
+                        <?php if ($fda['package'] && $fda['allowance'] > 0): ?>
                         <p class="text-sm mb-2">
                             Package: <strong><?php echo sanitize($fda['package']); ?></strong> &mdash;
                             <?php echo format_currency($fda['allowance']); ?>/month
                         </p>
                         <div class="row text-center mb-2">
                             <div class="col-6">
-                                <p class="text-xs text-secondary mb-0">Your Orders</p>
-                                <h5 class="mb-0"><?php echo format_currency($fda['total']); ?></h5>
+                                <p class="text-xs text-secondary mb-0">Membership</p>
+                                <h5 class="mb-0"><?php echo $fda['member_days']; ?> days</h5>
                             </div>
                             <div class="col-6">
-                                <p class="text-xs text-secondary mb-0">Minimum Required</p>
-                                <h5 class="mb-0"><?php echo format_currency($fda['min']); ?></h5>
+                                <p class="text-xs text-secondary mb-0">Required</p>
+                                <h5 class="mb-0"><?php echo $fda['min_days']; ?> days</h5>
                             </div>
                         </div>
-                        <?php if ($fda['min'] > 0): ?>
                         <div class="progress mb-2" style="height: 8px;">
                             <div class="progress-bar bg-gradient-<?php echo $fda['eligible'] ? 'success' : 'info'; ?>"
-                                 style="width: <?php echo min(100, ($fda['total'] / $fda['min']) * 100); ?>%"></div>
+                                 style="width: <?php echo min(100, ($fda['member_days'] / $fda['min_days']) * 100); ?>%"></div>
                         </div>
-                        <p class="text-xs text-center mb-2"><?php echo round(($fda['total'] / $fda['min']) * 100, 1); ?>% of quota</p>
-                        <?php endif; ?>
                         <?php if ($fda['eligible']): ?>
                         <div class="alert alert-success text-white text-sm py-2 mb-0">
                             <i class="material-icons align-middle text-sm">check_circle</i>
@@ -160,9 +137,11 @@ require_once '../includes/sidebar.php';
                         </div>
                         <?php else: ?>
                         <div class="alert alert-light text-sm py-2 mb-0 border">
-                            <?php echo format_currency($fda['min'] - $fda['total']); ?> more in orders to qualify.
+                            <?php echo ($fda['min_days'] - $fda['member_days']); ?> more days of membership to qualify.
                         </div>
                         <?php endif; ?>
+                        <?php elseif ($fda['package']): ?>
+                        <p class="text-sm text-muted mb-0">Your package does not include Freezer Display Allowance.</p>
                         <?php else: ?>
                         <p class="text-sm text-muted mb-0">No package assigned. Contact admin for FDA eligibility.</p>
                         <?php endif; ?>

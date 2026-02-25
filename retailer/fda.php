@@ -20,8 +20,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['convert'])) {
     if ($fda['eligible']) {
         $check = $conn->query("SELECT id FROM freezer_allowance WHERE user_id = $uid AND month = $month AND year = $year AND converted = 1");
         if ($check->num_rows === 0) {
+            $zero = 0;
             $stmt = $conn->prepare("INSERT INTO freezer_allowance (user_id, month, year, total_orders_amount, allowance_amount, converted, converted_at) VALUES (?, ?, ?, ?, ?, 1, NOW()) ON DUPLICATE KEY UPDATE total_orders_amount=VALUES(total_orders_amount), allowance_amount=VALUES(allowance_amount), converted=1, converted_at=NOW()");
-            $stmt->bind_param("iiidd", $uid, $month, $year, $fda['total'], $fda['allowance']);
+            $stmt->bind_param("iiidd", $uid, $month, $year, $zero, $fda['allowance']);
             $stmt->execute();
             $stmt->close();
 
@@ -62,41 +63,43 @@ require_once '../includes/sidebar.php';
                         <h6><i class="material-icons align-middle">ac_unit</i> Freezer Display Allowance - <?php echo date('F Y'); ?></h6>
                     </div>
                     <div class="card-body">
-                        <?php if ($fda['package']): ?>
+                        <?php if ($fda['package'] && $fda['allowance'] > 0): ?>
                         <p class="text-sm">
                             Your package: <strong><?php echo sanitize($fda['package']); ?></strong> —
-                            Earn <?php echo format_currency($fda['allowance']); ?>/month freezer display allowance when your monthly delivered orders reach <?php echo format_currency($fda['min']); ?>.
+                            Earn <?php echo format_currency($fda['allowance']); ?>/month freezer display allowance.
+                            Credited at the end of each month (minimum 20 days membership required).
                         </p>
+                        <?php elseif ($fda['package']): ?>
+                        <div class="alert alert-info text-white text-sm">Your package (<strong><?php echo sanitize($fda['package']); ?></strong>) does not include Freezer Display Allowance.</div>
                         <?php else: ?>
                         <div class="alert alert-warning text-white text-sm">No package assigned to your account. Please contact admin to set your package for FDA eligibility.</div>
                         <?php endif; ?>
 
+                        <?php if ($fda['allowance'] > 0): ?>
                         <hr>
                         <div class="row text-center mb-3">
                             <div class="col-4">
-                                <p class="text-sm mb-0">Your Orders</p>
-                                <h4><?php echo format_currency($fda['total']); ?></h4>
+                                <p class="text-sm mb-0">Membership</p>
+                                <h4><?php echo $fda['member_days']; ?> days</h4>
                             </div>
                             <div class="col-4">
-                                <p class="text-sm mb-0">Minimum Required</p>
-                                <h4><?php echo format_currency($fda['min']); ?></h4>
+                                <p class="text-sm mb-0">Required</p>
+                                <h4><?php echo $fda['min_days']; ?> days</h4>
                             </div>
                             <div class="col-4">
                                 <p class="text-sm mb-0">Allowance</p>
                                 <h4 class="<?php echo $fda['eligible'] ? 'text-success' : 'text-muted'; ?>">
-                                    <?php echo $fda['eligible'] ? format_currency($fda['allowance']) : '₱0.00'; ?>
+                                    <?php echo format_currency($fda['allowance']); ?>
                                 </h4>
                             </div>
                         </div>
 
-                        <?php if ($fda['min'] > 0): ?>
                         <div class="progress subsidy-progress mb-3">
                             <div class="progress-bar bg-gradient-<?php echo $fda['eligible'] ? 'success' : 'info'; ?>"
-                                 style="width: <?php echo min(100, ($fda['total'] / $fda['min']) * 100); ?>%">
-                                <?php echo round(($fda['total'] / $fda['min']) * 100, 1); ?>%
+                                 style="width: <?php echo min(100, ($fda['member_days'] / $fda['min_days']) * 100); ?>%">
+                                <?php echo $fda['member_days']; ?>/<?php echo $fda['min_days']; ?> days
                             </div>
                         </div>
-                        <?php endif; ?>
 
                         <?php if ($fda['eligible']): ?>
                             <?php if ($already_converted): ?>
@@ -114,8 +117,9 @@ require_once '../includes/sidebar.php';
                             <?php endif; ?>
                         <?php else: ?>
                         <div class="alert alert-warning text-white text-sm">
-                            You need <?php echo format_currency($fda['min'] - $fda['total']); ?> more in delivered orders to qualify.
+                            You need <?php echo ($fda['min_days'] - $fda['member_days']); ?> more days of membership to qualify.
                         </div>
+                        <?php endif; ?>
                         <?php endif; ?>
                     </div>
                 </div>

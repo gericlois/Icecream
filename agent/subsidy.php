@@ -1,5 +1,5 @@
 <?php
-$page_title = 'My Over-Ride';
+$page_title = 'My Gross Retail Over-Ride';
 $active_page = 'subsidy';
 
 require_once '../config/database.php';
@@ -64,9 +64,9 @@ require_once '../includes/sidebar.php';
                     </div>
                     <div class="card-body">
                         <p class="text-sm">
-                            Earn an over-ride from your tagged retailers' delivered orders based on their package:
-                            <strong>Starter Pack 2%</strong>, <strong>Premium Pack 3%</strong>, <strong>Ice Cream House 5%</strong>.
-                            Qualify for over-ride when total retailer orders reach <strong><?php echo format_currency($subsidy['min']); ?></strong> for the month.
+                            Enjoy earning as big as <strong>5%</strong> of your retailers successful re-orders.
+                            To qualify your account, you must encourage every retailer to reach a minimum of
+                            <strong>₱8,000.00</strong> re-order monthly or <strong>₱2,000.00</strong> re-orders weekly.
                         </p>
 
                         <hr>
@@ -76,8 +76,9 @@ require_once '../includes/sidebar.php';
                                 <h4><?php echo format_currency($subsidy['grand_total']); ?></h4>
                             </div>
                             <div class="col-4">
-                                <p class="text-sm mb-0">Minimum Required</p>
+                                <p class="text-sm mb-0">Minimum Re-Order</p>
                                 <h4><?php echo format_currency($subsidy['min']); ?></h4>
+                                <p class="text-xxs text-secondary mb-0">(<?php echo $subsidy['active_retailers']; ?> retailers x ₱8,000)</p>
                             </div>
                             <div class="col-4">
                                 <p class="text-sm mb-0">Your Over-Ride</p>
@@ -112,7 +113,7 @@ require_once '../includes/sidebar.php';
                             <?php endif; ?>
                         <?php else: ?>
                         <div class="alert alert-warning text-white text-sm">
-                            You need <?php echo format_currency($subsidy['min'] - $subsidy['grand_total']); ?> more in total retailer orders to qualify for over-ride.
+                            You need <strong><?php echo format_currency($subsidy['min'] - $subsidy['grand_total']); ?></strong> more in total retailer orders to reach the minimum re-order of <strong><?php echo format_currency($subsidy['min']); ?></strong> (<?php echo $subsidy['active_retailers']; ?> retailers x ₱8,000).
                         </div>
                         <?php endif; ?>
                     </div>

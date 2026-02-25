@@ -82,7 +82,7 @@ function calculate_subsidy($conn, $user_id, $month, $year) {
     $total = (float)$stmt->get_result()->fetch_assoc()['total'];
     $stmt->close();
 
-    // Get per-package subsidy rate and quota from user's package
+    // Get per-package subsidy rate and minimum from user's package
     $stmt = $conn->prepare("
         SELECT p.subsidy_rate, p.subsidy_min_orders, p.name as package_name
         FROM users u
@@ -113,21 +113,9 @@ function calculate_subsidy($conn, $user_id, $month, $year) {
 }
 
 function calculate_fda($conn, $user_id, $month, $year) {
-    // Get total delivered orders for this user/month
+    // Get user's package freezer display allowance and membership date
     $stmt = $conn->prepare("
-        SELECT COALESCE(SUM(total_amount), 0) as total
-        FROM orders
-        WHERE user_id = ? AND status = 'delivered'
-          AND MONTH(delivered_at) = ? AND YEAR(delivered_at) = ?
-    ");
-    $stmt->bind_param("iii", $user_id, $month, $year);
-    $stmt->execute();
-    $total = (float)$stmt->get_result()->fetch_assoc()['total'];
-    $stmt->close();
-
-    // Get user's package freezer display allowance
-    $stmt = $conn->prepare("
-        SELECT p.freezer_display_allowance, p.name as package_name
+        SELECT p.freezer_display_allowance, p.name as package_name, u.created_at as member_since
         FROM users u
         JOIN packages p ON u.package_info = p.slug
         WHERE u.id = ?
@@ -137,19 +125,27 @@ function calculate_fda($conn, $user_id, $month, $year) {
     $pkg = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
-    $min = (float)(get_setting($conn, 'fda_min_orders') ?: 8000);
-
     if (!$pkg || $pkg['freezer_display_allowance'] <= 0) {
-        return ['eligible' => false, 'total' => $total, 'allowance' => 0, 'min' => $min, 'package' => null];
+        return ['eligible' => false, 'allowance' => 0, 'package' => $pkg['package_name'] ?? null, 'member_days' => 0, 'min_days' => 20];
     }
 
     $allowance = (float)$pkg['freezer_display_allowance'];
     $package_name = $pkg['package_name'];
 
-    if ($total < $min) {
-        return ['eligible' => false, 'total' => $total, 'allowance' => $allowance, 'min' => $min, 'package' => $package_name];
-    }
-    return ['eligible' => true, 'total' => $total, 'allowance' => $allowance, 'min' => $min, 'package' => $package_name];
+    // Check membership duration (at least 20 days)
+    $member_since = new DateTime($pkg['member_since'], new DateTimeZone('Asia/Manila'));
+    $now = new DateTime('now', new DateTimeZone('Asia/Manila'));
+    $member_days = (int)$now->diff($member_since)->days;
+
+    $eligible = $member_days >= 20;
+
+    return [
+        'eligible' => $eligible,
+        'allowance' => $allowance,
+        'package' => $package_name,
+        'member_days' => $member_days,
+        'min_days' => 20,
+    ];
 }
 
 function credit_efunds($conn, $user_id, $amount, $type, $ref_type, $ref_id, $description, $processed_by = null) {
@@ -225,14 +221,17 @@ function calculate_agent_subsidy($conn, $agent_id, $month, $year) {
         ];
     }
 
-    $min = (float)get_setting($conn, 'agent_subsidy_min_orders') ?: 8000;
-    $eligible = $grand_total >= $min;
+    // Dynamic minimum: P8,000 per active retailer
+    $active_count = count($retailers);
+    $min = $active_count * 8000;
+    $eligible = $grand_total >= $min && $min > 0;
 
     return [
         'eligible' => $eligible,
         'grand_total' => $grand_total,
         'total_subsidy' => $eligible ? $total_subsidy : 0,
         'min' => $min,
+        'active_retailers' => $active_count,
         'breakdown' => $breakdown,
     ];
 }
@@ -306,11 +305,12 @@ function get_delivery_window($order_time = null) {
 }
 
 function time_ago($datetime) {
-    $now = new DateTime();
-    $ago = new DateTime($datetime);
+    $tz = new DateTimeZone('Asia/Manila');
+    $now = new DateTime('now', $tz);
+    $ago = new DateTime($datetime, $tz);
     $diff = $now->diff($ago);
 
-    if ($diff->d > 0) return $diff->d . ' day' . ($diff->d > 1 ? 's' : '') . ' ago';
+    if ($diff->days > 0) return $diff->days . ' day' . ($diff->days > 1 ? 's' : '') . ' ago';
     if ($diff->h > 0) return $diff->h . ' hour' . ($diff->h > 1 ? 's' : '') . ' ago';
     if ($diff->i > 0) return $diff->i . ' min ago';
     return 'Just now';

@@ -163,6 +163,21 @@ CREATE TABLE IF NOT EXISTS `freezer_allowance` (
     FOREIGN KEY (`user_id`) REFERENCES `users`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS `withdrawal_requests` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL,
+    `amount` DECIMAL(12,2) NOT NULL,
+    `method` ENUM('gcash','check') NOT NULL,
+    `gcash_name` VARCHAR(100) DEFAULT NULL,
+    `gcash_number` VARCHAR(20) DEFAULT NULL,
+    `status` ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+    `processed_by` INT DEFAULT NULL,
+    `processed_at` DATETIME DEFAULT NULL,
+    `admin_notes` TEXT DEFAULT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS `settings` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `setting_key` VARCHAR(50) NOT NULL UNIQUE,
@@ -202,7 +217,7 @@ INSERT INTO `products` (`name`, `qty_per_pack`, `unit_price`, `sort_order`) VALU
 ('Pint', 1, 63.00, 12),
 ('Pint Mango', 1, 63.00, 13),
 ('850ml', 1, 100.00, 14),
-('Half Gallon 1.6L', 1, 170.00, 15),
+('Half Gallon 1.5L', 1, 170.00, 15),
 ('One Gallon 3.0L', 1, 350.00, 16);
 
 -- Product Flavors
@@ -226,9 +241,9 @@ INSERT INTO `product_flavors` (`product_id`, `flavor_name`, `sort_order`) VALUES
 
 -- Packages
 INSERT INTO `packages` (`name`, `slug`, `subsidy_rate`, `subsidy_min_orders`, `freezer_display_allowance`, `sort_order`) VALUES
-('Starter Pack', 'starter_pack', 0.0200, 8000.00, 300.00, 1),
-('Premium Pack', 'premium_pack', 0.0300, 15000.00, 600.00, 2),
-('Ice Cream House', 'ice_cream_house', 0.0500, 100000.00, 1000.00, 3);
+('Starter Pack', 'starter_pack', 0.0500, 8000.00, 200.00, 1),
+('Premium Pack', 'premium_pack', 0.0500, 8000.00, 1000.00, 2),
+('Ice Cream House', 'ice_cream_house', 0.0500, 8000.00, 0.00, 3);
 
 -- Settings
 INSERT INTO `settings` (`setting_key`, `setting_value`) VALUES

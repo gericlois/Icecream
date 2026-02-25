@@ -95,7 +95,7 @@ require_once '../includes/sidebar.php';
                             <i class="material-icons opacity-10">payments</i>
                         </div>
                         <div class="text-end pt-1">
-                            <p class="text-sm mb-0">Total Sales</p>
+                            <p class="text-sm mb-0">Current Monthly Gross Sales</p>
                             <h4 class="mb-0"><?php echo format_currency($total_sales); ?></h4>
                         </div>
                     </div>
@@ -108,7 +108,7 @@ require_once '../includes/sidebar.php';
                             <i class="material-icons opacity-10">bolt</i>
                         </div>
                         <div class="text-end pt-1">
-                            <p class="text-sm mb-0">Total Over-Ride</p>
+                            <p class="text-sm mb-0">Total Gross Retail Over-Ride</p>
                             <h4 class="mb-0"><?php echo format_currency($total_override); ?></h4>
                         </div>
                     </div>
@@ -135,11 +135,11 @@ require_once '../includes/sidebar.php';
                 <form method="GET" class="row align-items-end g-3">
                     <div class="col-md-3">
                         <label class="form-label text-xs text-uppercase text-secondary font-weight-bolder">From Date</label>
-                        <input type="date" name="from" class="form-control" value="<?php echo sanitize($date_from); ?>">
+                        <input type="date" name="from" class="form-control border px-3" value="<?php echo sanitize($date_from); ?>">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label text-xs text-uppercase text-secondary font-weight-bolder">To Date</label>
-                        <input type="date" name="to" class="form-control" value="<?php echo sanitize($date_to); ?>">
+                        <input type="date" name="to" class="form-control border px-3" value="<?php echo sanitize($date_to); ?>">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label text-xs text-uppercase text-secondary font-weight-bolder">Retailer</label>
