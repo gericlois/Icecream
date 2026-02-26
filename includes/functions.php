@@ -113,7 +113,7 @@ function calculate_subsidy($conn, $user_id, $month, $year) {
 }
 
 function calculate_fda($conn, $user_id, $month, $year) {
-    // Get user's package freezer display allowance and membership date
+    // Get user's package freezer display allowance and registration date
     $stmt = $conn->prepare("
         SELECT p.freezer_display_allowance, p.name as package_name, u.created_at as member_since
         FROM users u
@@ -126,25 +126,46 @@ function calculate_fda($conn, $user_id, $month, $year) {
     $stmt->close();
 
     if (!$pkg || $pkg['freezer_display_allowance'] <= 0) {
-        return ['eligible' => false, 'allowance' => 0, 'package' => $pkg['package_name'] ?? null, 'member_days' => 0, 'min_days' => 20];
+        return ['eligible' => false, 'allowance' => 0, 'package' => $pkg['package_name'] ?? null, 'release_date' => null, 'registered_early' => false];
     }
 
     $allowance = (float)$pkg['freezer_display_allowance'];
     $package_name = $pkg['package_name'];
 
-    // Check membership duration (at least 20 days)
-    $member_since = new DateTime($pkg['member_since'], new DateTimeZone('Asia/Manila'));
-    $now = new DateTime('now', new DateTimeZone('Asia/Manila'));
-    $member_days = (int)$now->diff($member_since)->days;
+    $tz = new DateTimeZone('Asia/Manila');
+    $reg = new DateTime($pkg['member_since'], $tz);
+    $reg_day = (int)$reg->format('j');
+    $reg_month = (int)$reg->format('n');
+    $reg_year = (int)$reg->format('Y');
+    $registered_early = $reg_day <= 10;
 
-    $eligible = $member_days >= 20;
+    // First eligible month: registered before 10th = same month, after 10th = next month
+    if ($registered_early) {
+        $first_month = $reg_month;
+        $first_year = $reg_year;
+    } else {
+        $first_month = $reg_month + 1;
+        $first_year = $reg_year;
+        if ($first_month > 12) { $first_month = 1; $first_year++; }
+    }
+
+    // Release date = last day of the eligible month
+    $release = new DateTime("$first_year-$first_month-01", $tz);
+    $release->modify('last day of this month');
+
+    // Eligible if the current viewing month/year is on or after the first eligible month
+    $viewing = $year * 12 + $month;
+    $first = $first_year * 12 + $first_month;
+    $eligible = $viewing >= $first;
 
     return [
         'eligible' => $eligible,
         'allowance' => $allowance,
         'package' => $package_name,
-        'member_days' => $member_days,
-        'min_days' => 20,
+        'release_date' => $release->format('F j, Y'),
+        'registered_early' => $registered_early,
+        'reg_day' => $reg_day,
+        'first_eligible_month' => date('F Y', mktime(0, 0, 0, $first_month, 1, $first_year)),
     ];
 }
 

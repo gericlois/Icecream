@@ -117,17 +117,13 @@ require_once '../includes/sidebar.php';
                         </p>
                         <div class="row text-center mb-2">
                             <div class="col-6">
-                                <p class="text-xs text-secondary mb-0">Membership</p>
-                                <h5 class="mb-0"><?php echo $fda['member_days']; ?> days</h5>
+                                <p class="text-xs text-secondary mb-0">Registered Day</p>
+                                <h5 class="mb-0"><?php echo $fda['reg_day']; ?><sup><?php echo date('S', mktime(0,0,0,1,$fda['reg_day'])); ?></sup> of the month</h5>
                             </div>
                             <div class="col-6">
-                                <p class="text-xs text-secondary mb-0">Required</p>
-                                <h5 class="mb-0"><?php echo $fda['min_days']; ?> days</h5>
+                                <p class="text-xs text-secondary mb-0">First Eligible</p>
+                                <h5 class="mb-0"><?php echo $fda['first_eligible_month']; ?></h5>
                             </div>
-                        </div>
-                        <div class="progress mb-2" style="height: 8px;">
-                            <div class="progress-bar bg-gradient-<?php echo $fda['eligible'] ? 'success' : 'info'; ?>"
-                                 style="width: <?php echo min(100, ($fda['member_days'] / $fda['min_days']) * 100); ?>%"></div>
                         </div>
                         <?php if ($fda['eligible']): ?>
                         <div class="alert alert-success text-white text-sm py-2 mb-0">
@@ -137,7 +133,7 @@ require_once '../includes/sidebar.php';
                         </div>
                         <?php else: ?>
                         <div class="alert alert-light text-sm py-2 mb-0 border">
-                            <?php echo ($fda['min_days'] - $fda['member_days']); ?> more days of membership to qualify.
+                            Available at end of <strong><?php echo $fda['first_eligible_month']; ?></strong>.
                         </div>
                         <?php endif; ?>
                         <?php elseif ($fda['package']): ?>

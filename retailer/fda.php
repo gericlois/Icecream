@@ -67,7 +67,11 @@ require_once '../includes/sidebar.php';
                         <p class="text-sm">
                             Your package: <strong><?php echo sanitize($fda['package']); ?></strong> —
                             Earn <?php echo format_currency($fda['allowance']); ?>/month freezer display allowance.
-                            Credited at the end of each month (minimum 20 days membership required).
+                            <?php if ($fda['registered_early']): ?>
+                            You registered before the 10th — allowance is credited at the end of each month.
+                            <?php else: ?>
+                            You registered after the 10th — your first allowance will be credited at the end of <strong><?php echo $fda['first_eligible_month']; ?></strong>.
+                            <?php endif; ?>
                         </p>
                         <?php elseif ($fda['package']): ?>
                         <div class="alert alert-info text-white text-sm">Your package (<strong><?php echo sanitize($fda['package']); ?></strong>) does not include Freezer Display Allowance.</div>
@@ -79,25 +83,18 @@ require_once '../includes/sidebar.php';
                         <hr>
                         <div class="row text-center mb-3">
                             <div class="col-4">
-                                <p class="text-sm mb-0">Membership</p>
-                                <h4><?php echo $fda['member_days']; ?> days</h4>
+                                <p class="text-sm mb-0">Registration Day</p>
+                                <h4><?php echo $fda['reg_day']; ?><sup><?php echo date('S', mktime(0,0,0,1,$fda['reg_day'])); ?></sup></h4>
                             </div>
                             <div class="col-4">
-                                <p class="text-sm mb-0">Required</p>
-                                <h4><?php echo $fda['min_days']; ?> days</h4>
+                                <p class="text-sm mb-0">First Eligible</p>
+                                <h5><?php echo $fda['first_eligible_month']; ?></h5>
                             </div>
                             <div class="col-4">
                                 <p class="text-sm mb-0">Allowance</p>
                                 <h4 class="<?php echo $fda['eligible'] ? 'text-success' : 'text-muted'; ?>">
                                     <?php echo format_currency($fda['allowance']); ?>
                                 </h4>
-                            </div>
-                        </div>
-
-                        <div class="progress subsidy-progress mb-3">
-                            <div class="progress-bar bg-gradient-<?php echo $fda['eligible'] ? 'success' : 'info'; ?>"
-                                 style="width: <?php echo min(100, ($fda['member_days'] / $fda['min_days']) * 100); ?>%">
-                                <?php echo $fda['member_days']; ?>/<?php echo $fda['min_days']; ?> days
                             </div>
                         </div>
 
@@ -117,7 +114,8 @@ require_once '../includes/sidebar.php';
                             <?php endif; ?>
                         <?php else: ?>
                         <div class="alert alert-warning text-white text-sm">
-                            You need <?php echo ($fda['min_days'] - $fda['member_days']); ?> more days of membership to qualify.
+                            <i class="material-icons align-middle">schedule</i>
+                            Your first Freezer Display Allowance will be available at the end of <strong><?php echo $fda['first_eligible_month']; ?></strong>.
                         </div>
                         <?php endif; ?>
                         <?php endif; ?>
