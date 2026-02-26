@@ -175,7 +175,6 @@ require_once '../includes/sidebar.php';
                             <div class="progress-bar bg-gradient-<?php echo $subsidy['eligible'] ? 'success' : 'warning'; ?>"
                                  style="width: <?php echo min(100, ($subsidy['total'] / $subsidy['min']) * 100); ?>%"></div>
                         </div>
-                        <p class="text-xs text-center mb-2"><?php echo round(($subsidy['total'] / $subsidy['min']) * 100, 1); ?>% of quota</p>
                         <?php endif; ?>
                         <?php if ($subsidy['eligible']): ?>
                         <div class="alert alert-success text-white text-sm py-2 mb-0">
