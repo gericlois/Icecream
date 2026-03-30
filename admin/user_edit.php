@@ -57,7 +57,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $gender = in_array($_POST['gender'] ?? '', ['M', 'F']) ? $_POST['gender'] : null;
     $sss_gsis = trim($_POST['sss_gsis'] ?? '');
     $tin = trim($_POST['tin'] ?? '');
-    $address = trim($_POST['address'] ?? '');
+    $province = trim($_POST['province'] ?? '');
+    $town = trim($_POST['town'] ?? '');
+    $barangay = trim($_POST['barangay'] ?? '');
+    $purok_subdivision = trim($_POST['purok_subdivision'] ?? '');
+    $address = trim(implode(', ', array_filter([$purok_subdivision, $barangay, $town, $province])));
     $tel_no = trim($_POST['tel_no'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
     $email = trim($_POST['email'] ?? '');
@@ -98,9 +102,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($last_name) || empty($first_name)) {
         $error = 'Last name and first name are required.';
     } else {
-        $sql = "UPDATE users SET full_name=?, last_name=?, first_name=?, middle_name=?, birthday=?, gender=?, sss_gsis=?, tin=?, address=?, tel_no=?, phone=?, email=?, role=?, status=?, agent_id=?, application_type=?, package_info=?, nao_name=?, salesman_name=?, auth_rep_name=?, auth_rep_relationship=?, auth_rep_gender=?, freezer_brand=?, freezer_size=?, freezer_serial=?, freezer_status=?";
-        $types = "ssssssssssssssssssssssssss";
-        $params = [$full_name, $last_name, $first_name, $middle_name, $birthday, $gender, $sss_gsis, $tin, $address, $tel_no, $phone, $email, $role, $status, $agent_id, $application_type, $package_info, $nao_name, $salesman_name, $auth_rep_name, $auth_rep_relationship, $auth_rep_gender, $freezer_brand, $freezer_size, $freezer_serial, $freezer_status];
+        $sql = "UPDATE users SET full_name=?, last_name=?, first_name=?, middle_name=?, birthday=?, gender=?, sss_gsis=?, tin=?, address=?, province=?, town=?, barangay=?, purok_subdivision=?, tel_no=?, phone=?, email=?, role=?, status=?, agent_id=?, application_type=?, package_info=?, nao_name=?, salesman_name=?, auth_rep_name=?, auth_rep_relationship=?, auth_rep_gender=?, freezer_brand=?, freezer_size=?, freezer_serial=?, freezer_status=?";
+        $types = "ssssssssssssssssssssssssssssss";
+        $params = [$full_name, $last_name, $first_name, $middle_name, $birthday, $gender, $sss_gsis, $tin, $address, $province, $town, $barangay, $purok_subdivision, $tel_no, $phone, $email, $role, $status, $agent_id, $application_type, $package_info, $nao_name, $salesman_name, $auth_rep_name, $auth_rep_relationship, $auth_rep_gender, $freezer_brand, $freezer_size, $freezer_serial, $freezer_status];
 
         if (!empty($new_password)) {
             $hashed = password_hash($new_password, PASSWORD_DEFAULT);
@@ -124,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Merge POST values back into $user on validation error so form re-populates
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($error)) {
-    $post_fields = ['last_name','first_name','middle_name','birthday','gender','sss_gsis','tin','address','tel_no','phone','email','application_type','package_info','nao_name','salesman_name','auth_rep_name','auth_rep_relationship','auth_rep_gender','freezer_brand','freezer_size','freezer_serial','freezer_status'];
+    $post_fields = ['last_name','first_name','middle_name','birthday','gender','sss_gsis','tin','address','province','town','barangay','purok_subdivision','tel_no','phone','email','application_type','package_info','nao_name','salesman_name','auth_rep_name','auth_rep_relationship','auth_rep_gender','freezer_brand','freezer_size','freezer_serial','freezer_status'];
     foreach ($post_fields as $f) {
         $user[$f] = $_POST[$f] ?? $user[$f];
     }
@@ -247,9 +251,31 @@ require_once '../includes/sidebar.php';
                                     </div>
                                 </div>
                             </div>
-                            <div class="input-group input-group-outline <?php echo !empty($user['address']) ? 'is-filled' : ''; ?> mb-3">
-                                <label class="form-label">Address</label>
-                                <input type="text" name="address" class="form-control" value="<?php echo sanitize($user['address'] ?? ''); ?>">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="input-group input-group-outline <?php echo !empty($user['province']) ? 'is-filled' : ''; ?> mb-3">
+                                        <label class="form-label">Province</label>
+                                        <input type="text" name="province" class="form-control" value="<?php echo sanitize($user['province'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="input-group input-group-outline <?php echo !empty($user['town']) ? 'is-filled' : ''; ?> mb-3">
+                                        <label class="form-label">Town</label>
+                                        <input type="text" name="town" class="form-control" value="<?php echo sanitize($user['town'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="input-group input-group-outline <?php echo !empty($user['barangay']) ? 'is-filled' : ''; ?> mb-3">
+                                        <label class="form-label">Barangay</label>
+                                        <input type="text" name="barangay" class="form-control" value="<?php echo sanitize($user['barangay'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="input-group input-group-outline <?php echo !empty($user['purok_subdivision']) ? 'is-filled' : ''; ?> mb-3">
+                                        <label class="form-label">Purok/Subdivision</label>
+                                        <input type="text" name="purok_subdivision" class="form-control" value="<?php echo sanitize($user['purok_subdivision'] ?? ''); ?>">
+                                    </div>
+                                </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-4">

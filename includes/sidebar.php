@@ -207,6 +207,22 @@
                     <span class="nav-link-text ms-1">Freezer Allowance</span>
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link text-white <?php echo ($active_page ?? '') === 'town_override' ? 'active sidebar-active' : ''; ?>" href="<?php echo BASE_URL; ?>/retailer/town_override.php">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="material-icons opacity-10">store</i>
+                    </div>
+                    <span class="nav-link-text ms-1">Town Override</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white <?php echo ($active_page ?? '') === 'earnings' ? 'active sidebar-active' : ''; ?>" href="<?php echo BASE_URL; ?>/retailer/earnings.php">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="material-icons opacity-10">trending_up</i>
+                    </div>
+                    <span class="nav-link-text ms-1">My Earnings</span>
+                </a>
+            </li>
 <?php endif; ?>
 
             <li class="nav-item mt-3">

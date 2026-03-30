@@ -17,11 +17,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['update_profile'])) {
         $full_name = trim($_POST['full_name'] ?? '');
         $phone = trim($_POST['phone'] ?? '');
-        $address = trim($_POST['address'] ?? '');
+        $province = trim($_POST['province'] ?? '');
+        $town = trim($_POST['town'] ?? '');
+        $barangay = trim($_POST['barangay'] ?? '');
+        $purok_subdivision = trim($_POST['purok_subdivision'] ?? '');
+        $address = trim(implode(', ', array_filter([$purok_subdivision, $barangay, $town, $province])));
         $email = trim($_POST['email'] ?? '');
 
-        $stmt = $conn->prepare("UPDATE users SET full_name=?, phone=?, address=?, email=? WHERE id=?");
-        $stmt->bind_param("ssssi", $full_name, $phone, $address, $email, $uid);
+        $stmt = $conn->prepare("UPDATE users SET full_name=?, phone=?, address=?, province=?, town=?, barangay=?, purok_subdivision=?, email=? WHERE id=?");
+        $stmt->bind_param("ssssssssi", $full_name, $phone, $address, $province, $town, $barangay, $purok_subdivision, $email, $uid);
         $stmt->execute();
         $stmt->close();
 
@@ -77,9 +81,31 @@ require_once '../includes/sidebar.php';
                                 <label class="form-label">Phone</label>
                                 <input type="text" name="phone" class="form-control" value="<?php echo sanitize($user['phone'] ?? ''); ?>">
                             </div>
-                            <div class="input-group input-group-outline is-filled my-3">
-                                <label class="form-label">Address</label>
-                                <input type="text" name="address" class="form-control" value="<?php echo sanitize($user['address'] ?? ''); ?>">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="input-group input-group-outline <?php echo !empty($user['province']) ? 'is-filled' : ''; ?> my-3">
+                                        <label class="form-label">Province</label>
+                                        <input type="text" name="province" class="form-control" value="<?php echo sanitize($user['province'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="input-group input-group-outline <?php echo !empty($user['town']) ? 'is-filled' : ''; ?> my-3">
+                                        <label class="form-label">Town</label>
+                                        <input type="text" name="town" class="form-control" value="<?php echo sanitize($user['town'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="input-group input-group-outline <?php echo !empty($user['barangay']) ? 'is-filled' : ''; ?> my-3">
+                                        <label class="form-label">Barangay</label>
+                                        <input type="text" name="barangay" class="form-control" value="<?php echo sanitize($user['barangay'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="input-group input-group-outline <?php echo !empty($user['purok_subdivision']) ? 'is-filled' : ''; ?> my-3">
+                                        <label class="form-label">Purok/Subdivision</label>
+                                        <input type="text" name="purok_subdivision" class="form-control" value="<?php echo sanitize($user['purok_subdivision'] ?? ''); ?>">
+                                    </div>
+                                </div>
                             </div>
                             <div class="input-group input-group-outline is-filled my-3">
                                 <label class="form-label">Email</label>

@@ -257,6 +257,81 @@ function calculate_agent_subsidy($conn, $agent_id, $month, $year) {
     ];
 }
 
+function calculate_town_override($conn, $user_id, $month, $year) {
+    // Ice Cream House retailers get 2% of Starter Pack & Premium Pack orders in same town
+    $stmt = $conn->prepare("
+        SELECT u.town, u.package_info, p.slug as package_slug
+        FROM users u
+        JOIN packages p ON u.package_info = p.slug
+        WHERE u.id = ? AND u.role = 'retailer'
+    ");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $user = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if (!$user || $user['package_slug'] !== 'ice_cream_house' || empty($user['town'])) {
+        return ['eligible' => false, 'is_ice_cream_house' => ($user['package_slug'] ?? '') === 'ice_cream_house', 'town' => $user['town'] ?? '', 'total_orders' => 0, 'override_amount' => 0, 'rate' => 0.02, 'breakdown' => []];
+    }
+
+    $town = $user['town'];
+    $rate = 0.02; // 2%
+
+    // Get Starter Pack & Premium Pack retailers in the same town (excluding self)
+    $stmt = $conn->prepare("
+        SELECT u.id, u.full_name, p.name as package_name, p.slug as package_slug
+        FROM users u
+        JOIN packages p ON u.package_info = p.slug
+        WHERE u.role = 'retailer' AND u.status = 'active'
+          AND u.town = ? AND u.id != ?
+          AND p.slug IN ('starter_pack', 'premium_pack')
+        ORDER BY u.full_name
+    ");
+    $stmt->bind_param("si", $town, $user_id);
+    $stmt->execute();
+    $retailers = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    $total_orders = 0;
+    $breakdown = [];
+
+    foreach ($retailers as $r) {
+        $stmt = $conn->prepare("
+            SELECT COALESCE(SUM(total_amount), 0) as total
+            FROM orders
+            WHERE user_id = ? AND status = 'delivered'
+              AND MONTH(delivered_at) = ? AND YEAR(delivered_at) = ?
+        ");
+        $stmt->bind_param("iii", $r['id'], $month, $year);
+        $stmt->execute();
+        $retailer_total = (float)$stmt->get_result()->fetch_assoc()['total'];
+        $stmt->close();
+
+        $override = round($retailer_total * $rate, 2);
+        $total_orders += $retailer_total;
+
+        $breakdown[] = [
+            'id' => $r['id'],
+            'name' => $r['full_name'],
+            'package' => $r['package_name'],
+            'orders_total' => $retailer_total,
+            'override' => $override,
+        ];
+    }
+
+    $override_amount = round($total_orders * $rate, 2);
+
+    return [
+        'eligible' => $override_amount > 0,
+        'is_ice_cream_house' => true,
+        'town' => $town,
+        'total_orders' => $total_orders,
+        'override_amount' => $override_amount,
+        'rate' => $rate,
+        'breakdown' => $breakdown,
+    ];
+}
+
 function debit_efunds($conn, $user_id, $amount, $ref_type, $ref_id, $description, $processed_by = null) {
     return credit_efunds($conn, $user_id, -$amount, 'payment', $ref_type, $ref_id, $description, $processed_by);
 }

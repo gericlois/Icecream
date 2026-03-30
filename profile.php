@@ -44,7 +44,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $gender = in_array($_POST['gender'] ?? '', ['M', 'F']) ? $_POST['gender'] : null;
     $sss_gsis = trim($_POST['sss_gsis'] ?? '');
     $tin = trim($_POST['tin'] ?? '');
-    $address = trim($_POST['address'] ?? '');
+    $province = trim($_POST['province'] ?? '');
+    $town = trim($_POST['town'] ?? '');
+    $barangay = trim($_POST['barangay'] ?? '');
+    $purok_subdivision = trim($_POST['purok_subdivision'] ?? '');
+    $address = trim(implode(', ', array_filter([$purok_subdivision, $barangay, $town, $province])));
     $tel_no = trim($_POST['tel_no'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
     $email = trim($_POST['email'] ?? '');
@@ -57,8 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($last_name) || empty($first_name)) {
         flash_message('danger', 'Last name and first name are required.');
     } else {
-        $stmt = $conn->prepare("UPDATE users SET full_name=?, last_name=?, first_name=?, middle_name=?, birthday=?, gender=?, sss_gsis=?, tin=?, address=?, tel_no=?, phone=?, email=?, auth_rep_name=?, auth_rep_relationship=?, auth_rep_gender=? WHERE id=?");
-        $stmt->bind_param("sssssssssssssssi", $full_name, $last_name, $first_name, $middle_name, $birthday, $gender, $sss_gsis, $tin, $address, $tel_no, $phone, $email, $auth_rep_name, $auth_rep_relationship, $auth_rep_gender, $user_id);
+        $stmt = $conn->prepare("UPDATE users SET full_name=?, last_name=?, first_name=?, middle_name=?, birthday=?, gender=?, sss_gsis=?, tin=?, address=?, province=?, town=?, barangay=?, purok_subdivision=?, tel_no=?, phone=?, email=?, auth_rep_name=?, auth_rep_relationship=?, auth_rep_gender=? WHERE id=?");
+        $stmt->bind_param("sssssssssssssssssssi", $full_name, $last_name, $first_name, $middle_name, $birthday, $gender, $sss_gsis, $tin, $address, $province, $town, $barangay, $purok_subdivision, $tel_no, $phone, $email, $auth_rep_name, $auth_rep_relationship, $auth_rep_gender, $user_id);
         $stmt->execute();
         $stmt->close();
 
@@ -158,10 +162,30 @@ require_once 'includes/sidebar.php';
                                     </div>
                                 </div>
                             </div>
-                            <div class="mb-3">
-                                <div class="input-group input-group-outline input-group-static">
-                                    <label>Address</label>
-                                    <input type="text" name="address" class="form-control" value="<?php echo sanitize($user['address'] ?? ''); ?>">
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <div class="input-group input-group-outline input-group-static">
+                                        <label>Province</label>
+                                        <input type="text" name="province" class="form-control" value="<?php echo sanitize($user['province'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="input-group input-group-outline input-group-static">
+                                        <label>Town</label>
+                                        <input type="text" name="town" class="form-control" value="<?php echo sanitize($user['town'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="input-group input-group-outline input-group-static">
+                                        <label>Barangay</label>
+                                        <input type="text" name="barangay" class="form-control" value="<?php echo sanitize($user['barangay'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="input-group input-group-outline input-group-static">
+                                        <label>Purok/Subdivision</label>
+                                        <input type="text" name="purok_subdivision" class="form-control" value="<?php echo sanitize($user['purok_subdivision'] ?? ''); ?>">
+                                    </div>
                                 </div>
                             </div>
                             <div class="row">

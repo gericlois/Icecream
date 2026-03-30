@@ -19,6 +19,10 @@ CREATE TABLE IF NOT EXISTS `users` (
     `role` ENUM('admin','subdealer','retailer') NOT NULL DEFAULT 'retailer',
     `phone` VARCHAR(20) DEFAULT NULL,
     `address` TEXT DEFAULT NULL,
+    `province` VARCHAR(100) DEFAULT NULL,
+    `town` VARCHAR(100) DEFAULT NULL,
+    `barangay` VARCHAR(100) DEFAULT NULL,
+    `purok_subdivision` VARCHAR(100) DEFAULT NULL,
     `email` VARCHAR(100) DEFAULT NULL,
     `efunds_balance` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
     `application_type` ENUM('cod','7days_term') DEFAULT NULL,
@@ -134,6 +138,19 @@ CREATE TABLE IF NOT EXISTS `electric_subsidy` (
     `converted_at` DATETIME DEFAULT NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY `user_month_year` (`user_id`, `month`, `year`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `town_override` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL,
+    `month` INT NOT NULL,
+    `year` INT NOT NULL,
+    `total_orders_amount` DECIMAL(12,2) NOT NULL DEFAULT 0,
+    `override_amount` DECIMAL(12,2) NOT NULL DEFAULT 0,
+    `converted` TINYINT(1) NOT NULL DEFAULT 0,
+    `converted_at` DATETIME DEFAULT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY `unique_user_month` (`user_id`, `month`, `year`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `packages` (

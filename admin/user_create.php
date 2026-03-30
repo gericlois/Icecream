@@ -26,7 +26,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $gender = in_array($_POST['gender'] ?? '', ['M', 'F']) ? $_POST['gender'] : null;
     $sss_gsis = trim($_POST['sss_gsis'] ?? '');
     $tin = trim($_POST['tin'] ?? '');
-    $address = trim($_POST['address'] ?? '');
+    $province = trim($_POST['province'] ?? '');
+    $town = trim($_POST['town'] ?? '');
+    $barangay = trim($_POST['barangay'] ?? '');
+    $purok_subdivision = trim($_POST['purok_subdivision'] ?? '');
+    $address = trim(implode(', ', array_filter([$purok_subdivision, $barangay, $town, $province])));
     $tel_no = trim($_POST['tel_no'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
     $email = trim($_POST['email'] ?? '');
@@ -71,8 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $hashed = password_hash($password, PASSWORD_DEFAULT);
             $registered_by = current_user_id();
-            $stmt = $conn->prepare("INSERT INTO users (username, password, full_name, last_name, first_name, middle_name, birthday, gender, sss_gsis, tin, tel_no, role, phone, address, email, application_type, package_info, auth_rep_name, auth_rep_relationship, auth_rep_gender, freezer_brand, freezer_size, freezer_serial, freezer_status, nao_name, salesman_name, agent_id, registered_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssssssssssssssssssssssssssii", $username, $hashed, $full_name, $last_name, $first_name, $middle_name, $birthday, $gender, $sss_gsis, $tin, $tel_no, $role, $phone, $address, $email, $application_type, $package_info, $auth_rep_name, $auth_rep_relationship, $auth_rep_gender, $freezer_brand, $freezer_size, $freezer_serial, $freezer_status, $nao_name, $salesman_name, $agent_id, $registered_by);
+            $stmt = $conn->prepare("INSERT INTO users (username, password, full_name, last_name, first_name, middle_name, birthday, gender, sss_gsis, tin, tel_no, role, phone, address, province, town, barangay, purok_subdivision, email, application_type, package_info, auth_rep_name, auth_rep_relationship, auth_rep_gender, freezer_brand, freezer_size, freezer_serial, freezer_status, nao_name, salesman_name, agent_id, registered_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("ssssssssssssssssssssssssssssssii", $username, $hashed, $full_name, $last_name, $first_name, $middle_name, $birthday, $gender, $sss_gsis, $tin, $tel_no, $role, $phone, $address, $province, $town, $barangay, $purok_subdivision, $email, $application_type, $package_info, $auth_rep_name, $auth_rep_relationship, $auth_rep_gender, $freezer_brand, $freezer_size, $freezer_serial, $freezer_status, $nao_name, $salesman_name, $agent_id, $registered_by);
             $stmt->execute();
             $stmt->close();
             flash_message('success', 'User created successfully.');
@@ -189,9 +193,31 @@ require_once '../includes/sidebar.php';
                                     </div>
                                 </div>
                             </div>
-                            <div class="input-group input-group-outline <?php echo !empty($_POST['address'] ?? '') ? 'is-filled' : ''; ?> mb-3">
-                                <label class="form-label">Address</label>
-                                <input type="text" name="address" class="form-control" value="<?php echo sanitize($_POST['address'] ?? ''); ?>">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="input-group input-group-outline <?php echo !empty($_POST['province'] ?? '') ? 'is-filled' : ''; ?> mb-3">
+                                        <label class="form-label">Province</label>
+                                        <input type="text" name="province" class="form-control" value="<?php echo sanitize($_POST['province'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="input-group input-group-outline <?php echo !empty($_POST['town'] ?? '') ? 'is-filled' : ''; ?> mb-3">
+                                        <label class="form-label">Town</label>
+                                        <input type="text" name="town" class="form-control" value="<?php echo sanitize($_POST['town'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="input-group input-group-outline <?php echo !empty($_POST['barangay'] ?? '') ? 'is-filled' : ''; ?> mb-3">
+                                        <label class="form-label">Barangay</label>
+                                        <input type="text" name="barangay" class="form-control" value="<?php echo sanitize($_POST['barangay'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="input-group input-group-outline <?php echo !empty($_POST['purok_subdivision'] ?? '') ? 'is-filled' : ''; ?> mb-3">
+                                        <label class="form-label">Purok/Subdivision</label>
+                                        <input type="text" name="purok_subdivision" class="form-control" value="<?php echo sanitize($_POST['purok_subdivision'] ?? ''); ?>">
+                                    </div>
+                                </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-4">
