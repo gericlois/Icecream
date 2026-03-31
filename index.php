@@ -67,7 +67,6 @@ if (isset($_SESSION['login_error'])) {
                 </div>
             </div>
             <p class="text-center text-dark text-sm mt-3 mb-0"><?php echo APP_NAME; ?></p>
-            <p class="text-center text-secondary text-xs"><?php echo COMPANY_ADDRESS; ?></p>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/material-dashboard@3.0.9/assets/js/material-dashboard.min.js"></script>
