@@ -116,6 +116,30 @@ require_once '../includes/sidebar.php';
                     </div>
                 </div>
             </div>
+            <?php if (!empty($user['freezer_code']) || !empty($user['freezer_brand']) || !empty($user['freezer_serial'])): ?>
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header pb-0"><h6>Freezer Info</h6></div>
+                    <div class="card-body">
+                        <?php if (!empty($user['freezer_code'])): ?>
+                        <p class="text-sm mb-2"><span class="text-secondary">Freezer Code:</span> <strong><?php echo sanitize($user['freezer_code']); ?></strong></p>
+                        <?php endif; ?>
+                        <?php if (!empty($user['freezer_brand'])): ?>
+                        <p class="text-sm mb-2"><span class="text-secondary">Brand:</span> <?php echo sanitize($user['freezer_brand']); ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($user['freezer_size'])): ?>
+                        <p class="text-sm mb-2"><span class="text-secondary">Size:</span> <?php echo sanitize($user['freezer_size']); ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($user['freezer_serial'])): ?>
+                        <p class="text-sm mb-2"><span class="text-secondary">Serial #:</span> <?php echo sanitize($user['freezer_serial']); ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($user['freezer_status'])): ?>
+                        <p class="text-sm mb-0"><span class="text-secondary">Status:</span> <?php echo sanitize($user['freezer_status']); ?></p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header pb-0"><h6>Change Password</h6></div>

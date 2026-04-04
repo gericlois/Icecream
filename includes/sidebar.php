@@ -216,6 +216,14 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link text-white <?php echo ($active_page ?? '') === 'freezer_partner' ? 'active sidebar-active' : ''; ?>" href="<?php echo BASE_URL; ?>/retailer/freezer_partner.php">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="material-icons opacity-10">handshake</i>
+                    </div>
+                    <span class="nav-link-text ms-1">Freezer Partner</span>
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link text-white <?php echo ($active_page ?? '') === 'earnings' ? 'active sidebar-active' : ''; ?>" href="<?php echo BASE_URL; ?>/retailer/earnings.php">
                     <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="material-icons opacity-10">trending_up</i>

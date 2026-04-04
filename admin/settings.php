@@ -59,7 +59,7 @@ require_once '../includes/sidebar.php';
                                 <div class="col-md-6">
                                     <div class="input-group input-group-outline is-filled my-3">
                                         <label class="form-label">Subsidy Factor</label>
-                                        <input type="number" name="subsidy_factor" class="form-control" value="<?php echo sanitize($settings['subsidy_factor'] ?? '0.88'); ?>" step="0.01" min="0" max="1">
+                                        <input type="number" name="subsidy_factor" class="form-control" value="<?php echo sanitize($settings['subsidy_factor'] ?? '0.63'); ?>" step="0.01" min="0" max="1">
                                     </div>
                                 </div>
                             </div>

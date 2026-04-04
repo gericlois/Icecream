@@ -81,6 +81,7 @@ require_once '../includes/sidebar.php';
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Phone</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Address</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Package</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Freezer Code</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Agent</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">E-Funds</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
@@ -102,6 +103,7 @@ require_once '../includes/sidebar.php';
                                         <td><span class="text-xs"><?php echo sanitize($u['phone'] ?? '-'); ?></span></td>
                                         <td><span class="text-xs"><?php echo sanitize($u['address'] ?? '-'); ?></span></td>
                                         <td><span class="text-xs"><?php echo sanitize($u['package_name'] ?? '-'); ?></span></td>
+                                        <td><span class="text-xs font-weight-bold"><?php echo sanitize($u['freezer_code'] ?? '-'); ?></span></td>
                                         <td><span class="text-xs"><?php echo sanitize($u['agent_name'] ?? '-'); ?></span></td>
                                         <td><span class="text-xs font-weight-bold"><?php echo format_currency($u['efunds_balance']); ?></span></td>
                                         <td><span class="badge bg-gradient-<?php echo $u['status'] === 'active' ? 'success' : 'secondary'; ?>"><?php echo ucfirst($u['status']); ?></span></td>

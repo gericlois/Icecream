@@ -266,7 +266,7 @@ INSERT INTO `packages` (`name`, `slug`, `subsidy_rate`, `subsidy_min_orders`, `f
 INSERT INTO `settings` (`setting_key`, `setting_value`) VALUES
 ('efunds_discount_percent', '0'),
 ('subsidy_min_orders', '6000'),
-('subsidy_factor', '0.88'),
+('subsidy_factor', '0.63'),
 ('subsidy_rate', '0.05'),
 ('company_name', 'JMC FOODIES ICE CREAM DISTRIBUTIONS'),
 ('company_address', 'Blk 2 Lot 34 City Homes Subdivision Nancatyasan Urdaneta City, Pangasinan'),

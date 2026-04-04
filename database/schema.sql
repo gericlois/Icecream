@@ -38,6 +38,7 @@ CREATE TABLE `users` (
     `freezer_size` VARCHAR(50) DEFAULT NULL,
     `freezer_serial` VARCHAR(100) DEFAULT NULL,
     `freezer_status` VARCHAR(50) DEFAULT NULL,
+    `freezer_code` VARCHAR(50) DEFAULT NULL,
     `nao_name` VARCHAR(100) DEFAULT NULL,
     `salesman_name` VARCHAR(100) DEFAULT NULL,
     `registered_by` INT DEFAULT NULL,
@@ -168,6 +169,21 @@ CREATE TABLE `town_override` (
     `year` INT NOT NULL,
     `total_orders_amount` DECIMAL(12,2) NOT NULL DEFAULT 0,
     `override_amount` DECIMAL(12,2) NOT NULL DEFAULT 0,
+    `converted` TINYINT(1) NOT NULL DEFAULT 0,
+    `converted_at` DATETIME DEFAULT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY `unique_user_month` (`user_id`, `month`, `year`),
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`)
+) ENGINE=InnoDB;
+
+-- Freezer Partner (Ice Cream House gets 3% from retailers with matching freezer code)
+CREATE TABLE `freezer_partner` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL,
+    `month` INT NOT NULL,
+    `year` INT NOT NULL,
+    `total_orders_amount` DECIMAL(12,2) NOT NULL DEFAULT 0,
+    `partner_amount` DECIMAL(12,2) NOT NULL DEFAULT 0,
     `converted` TINYINT(1) NOT NULL DEFAULT 0,
     `converted_at` DATETIME DEFAULT NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

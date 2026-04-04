@@ -68,6 +68,7 @@ require_once '../includes/sidebar.php';
                             To qualify your account, you must encourage every retailer to reach a minimum of
                             <strong>₱8,000.00</strong> re-order monthly or <strong>₱2,000.00</strong> re-orders weekly.
                         </p>
+                        <p class="text-sm mb-1"><strong>Formula:</strong> Total Re-order x 0.63 x 5%</p>
 
                         <hr>
                         <div class="row text-center mb-3">

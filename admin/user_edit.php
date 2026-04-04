@@ -98,13 +98,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $freezer_size = trim($_POST['freezer_size'] ?? '');
     $freezer_serial = trim($_POST['freezer_serial'] ?? '');
     $freezer_status = trim($_POST['freezer_status'] ?? '');
+    $freezer_code = trim($_POST['freezer_code'] ?? '');
 
     if (empty($last_name) || empty($first_name)) {
         $error = 'Last name and first name are required.';
     } else {
-        $sql = "UPDATE users SET full_name=?, last_name=?, first_name=?, middle_name=?, birthday=?, gender=?, sss_gsis=?, tin=?, address=?, province=?, town=?, barangay=?, purok_subdivision=?, tel_no=?, phone=?, email=?, role=?, status=?, agent_id=?, application_type=?, package_info=?, nao_name=?, salesman_name=?, auth_rep_name=?, auth_rep_relationship=?, auth_rep_gender=?, freezer_brand=?, freezer_size=?, freezer_serial=?, freezer_status=?";
-        $types = "ssssssssssssssssssssssssssssss";
-        $params = [$full_name, $last_name, $first_name, $middle_name, $birthday, $gender, $sss_gsis, $tin, $address, $province, $town, $barangay, $purok_subdivision, $tel_no, $phone, $email, $role, $status, $agent_id, $application_type, $package_info, $nao_name, $salesman_name, $auth_rep_name, $auth_rep_relationship, $auth_rep_gender, $freezer_brand, $freezer_size, $freezer_serial, $freezer_status];
+        $sql = "UPDATE users SET full_name=?, last_name=?, first_name=?, middle_name=?, birthday=?, gender=?, sss_gsis=?, tin=?, address=?, province=?, town=?, barangay=?, purok_subdivision=?, tel_no=?, phone=?, email=?, role=?, status=?, agent_id=?, application_type=?, package_info=?, nao_name=?, salesman_name=?, auth_rep_name=?, auth_rep_relationship=?, auth_rep_gender=?, freezer_brand=?, freezer_size=?, freezer_serial=?, freezer_status=?, freezer_code=?";
+        $types = "sssssssssssssssssssssssssssssss";
+        $params = [$full_name, $last_name, $first_name, $middle_name, $birthday, $gender, $sss_gsis, $tin, $address, $province, $town, $barangay, $purok_subdivision, $tel_no, $phone, $email, $role, $status, $agent_id, $application_type, $package_info, $nao_name, $salesman_name, $auth_rep_name, $auth_rep_relationship, $auth_rep_gender, $freezer_brand, $freezer_size, $freezer_serial, $freezer_status, $freezer_code];
 
         if (!empty($new_password)) {
             $hashed = password_hash($new_password, PASSWORD_DEFAULT);
@@ -128,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Merge POST values back into $user on validation error so form re-populates
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($error)) {
-    $post_fields = ['last_name','first_name','middle_name','birthday','gender','sss_gsis','tin','address','province','town','barangay','purok_subdivision','tel_no','phone','email','application_type','package_info','nao_name','salesman_name','auth_rep_name','auth_rep_relationship','auth_rep_gender','freezer_brand','freezer_size','freezer_serial','freezer_status'];
+    $post_fields = ['last_name','first_name','middle_name','birthday','gender','sss_gsis','tin','address','province','town','barangay','purok_subdivision','tel_no','phone','email','application_type','package_info','nao_name','salesman_name','auth_rep_name','auth_rep_relationship','auth_rep_gender','freezer_brand','freezer_size','freezer_serial','freezer_status','freezer_code'];
     foreach ($post_fields as $f) {
         $user[$f] = $_POST[$f] ?? $user[$f];
     }
@@ -394,16 +395,22 @@ require_once '../includes/sidebar.php';
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="input-group input-group-outline <?php echo !empty($user['freezer_serial']) ? 'is-filled' : ''; ?> mb-3">
                                         <label class="form-label">Serial #</label>
                                         <input type="text" name="freezer_serial" class="form-control" value="<?php echo sanitize($user['freezer_serial'] ?? ''); ?>">
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="input-group input-group-outline <?php echo !empty($user['freezer_status']) ? 'is-filled' : ''; ?> mb-3">
                                         <label class="form-label">Freezer Status</label>
                                         <input type="text" name="freezer_status" class="form-control" value="<?php echo sanitize($user['freezer_status'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="input-group input-group-outline <?php echo !empty($user['freezer_code']) ? 'is-filled' : ''; ?> mb-3">
+                                        <label class="form-label">Freezer Code</label>
+                                        <input type="text" name="freezer_code" class="form-control" value="<?php echo sanitize($user['freezer_code'] ?? ''); ?>">
                                     </div>
                                 </div>
                             </div>

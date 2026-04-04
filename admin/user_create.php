@@ -62,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $freezer_size = trim($_POST['freezer_size'] ?? '');
     $freezer_serial = trim($_POST['freezer_serial'] ?? '');
     $freezer_status = trim($_POST['freezer_status'] ?? '');
+    $freezer_code = trim($_POST['freezer_code'] ?? '');
 
     if (empty($last_name) || empty($first_name) || empty($username) || empty($password)) {
         $error = 'Last name, first name, username, and password are required.';
@@ -75,8 +76,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $hashed = password_hash($password, PASSWORD_DEFAULT);
             $registered_by = current_user_id();
-            $stmt = $conn->prepare("INSERT INTO users (username, password, full_name, last_name, first_name, middle_name, birthday, gender, sss_gsis, tin, tel_no, role, phone, address, province, town, barangay, purok_subdivision, email, application_type, package_info, auth_rep_name, auth_rep_relationship, auth_rep_gender, freezer_brand, freezer_size, freezer_serial, freezer_status, nao_name, salesman_name, agent_id, registered_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssssssssssssssssssssssssssssssii", $username, $hashed, $full_name, $last_name, $first_name, $middle_name, $birthday, $gender, $sss_gsis, $tin, $tel_no, $role, $phone, $address, $province, $town, $barangay, $purok_subdivision, $email, $application_type, $package_info, $auth_rep_name, $auth_rep_relationship, $auth_rep_gender, $freezer_brand, $freezer_size, $freezer_serial, $freezer_status, $nao_name, $salesman_name, $agent_id, $registered_by);
+            $stmt = $conn->prepare("INSERT INTO users (username, password, full_name, last_name, first_name, middle_name, birthday, gender, sss_gsis, tin, tel_no, role, phone, address, province, town, barangay, purok_subdivision, email, application_type, package_info, auth_rep_name, auth_rep_relationship, auth_rep_gender, freezer_brand, freezer_size, freezer_serial, freezer_status, freezer_code, nao_name, salesman_name, agent_id, registered_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("sssssssssssssssssssssssssssssssii", $username, $hashed, $full_name, $last_name, $first_name, $middle_name, $birthday, $gender, $sss_gsis, $tin, $tel_no, $role, $phone, $address, $province, $town, $barangay, $purok_subdivision, $email, $application_type, $package_info, $auth_rep_name, $auth_rep_relationship, $auth_rep_gender, $freezer_brand, $freezer_size, $freezer_serial, $freezer_status, $freezer_code, $nao_name, $salesman_name, $agent_id, $registered_by);
             $stmt->execute();
             $stmt->close();
             flash_message('success', 'User created successfully.');
@@ -337,16 +338,22 @@ require_once '../includes/sidebar.php';
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <div class="input-group input-group-outline <?php echo !empty($_POST['freezer_serial'] ?? '') ? 'is-filled' : ''; ?> mb-3">
                                             <label class="form-label">Serial #</label>
                                             <input type="text" name="freezer_serial" class="form-control" value="<?php echo sanitize($_POST['freezer_serial'] ?? ''); ?>">
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <div class="input-group input-group-outline <?php echo !empty($_POST['freezer_status'] ?? '') ? 'is-filled' : ''; ?> mb-3">
                                             <label class="form-label">Freezer Status</label>
                                             <input type="text" name="freezer_status" class="form-control" value="<?php echo sanitize($_POST['freezer_status'] ?? ''); ?>">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="input-group input-group-outline <?php echo !empty($_POST['freezer_code'] ?? '') ? 'is-filled' : ''; ?> mb-3">
+                                            <label class="form-label">Freezer Code</label>
+                                            <input type="text" name="freezer_code" class="form-control" value="<?php echo sanitize($_POST['freezer_code'] ?? ''); ?>">
                                         </div>
                                     </div>
                                 </div>

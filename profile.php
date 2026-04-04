@@ -315,10 +315,13 @@ require_once 'includes/sidebar.php';
                 </div>
 
                 <!-- Freezer Info (read-only) -->
-                <?php if (!empty($user['freezer_brand']) || !empty($user['freezer_serial'])): ?>
+                <?php if (!empty($user['freezer_brand']) || !empty($user['freezer_serial']) || !empty($user['freezer_code'])): ?>
                 <div class="card">
                     <div class="card-header pb-0"><h6 class="text-sm">Freezer Info</h6></div>
                     <div class="card-body pt-2">
+                        <?php if (!empty($user['freezer_code'])): ?>
+                        <p class="text-sm mb-2"><span class="text-secondary">Freezer Code:</span> <strong><?php echo sanitize($user['freezer_code']); ?></strong></p>
+                        <?php endif; ?>
                         <?php if (!empty($user['freezer_brand'])): ?>
                         <p class="text-sm mb-2"><span class="text-secondary">Brand:</span> <?php echo sanitize($user['freezer_brand']); ?></p>
                         <?php endif; ?>

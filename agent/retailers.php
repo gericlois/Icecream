@@ -115,6 +115,7 @@ require_once '../includes/sidebar.php';
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4">Name</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Phone</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Address</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Freezer Code</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">E-Funds</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
                             </tr>
@@ -128,6 +129,7 @@ require_once '../includes/sidebar.php';
                                 </td>
                                 <td><span class="text-xs"><?php echo sanitize($r['phone'] ?? '-'); ?></span></td>
                                 <td><span class="text-xs"><?php echo sanitize($r['address'] ?? '-'); ?></span></td>
+                                <td><span class="text-xs font-weight-bold"><?php echo sanitize($r['freezer_code'] ?? '-'); ?></span></td>
                                 <td><span class="text-xs font-weight-bold"><?php echo format_currency($r['efunds_balance']); ?></span></td>
                                 <td><span class="badge bg-gradient-<?php echo $r['status'] === 'active' ? 'success' : 'secondary'; ?>"><?php echo ucfirst($r['status']); ?></span></td>
                             </tr>

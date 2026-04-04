@@ -21,15 +21,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['convert'])) {
     if ($override['eligible']) {
         $check = $conn->query("SELECT id FROM town_override WHERE user_id = $uid AND month = $month AND year = $year AND converted = 1");
         if ($check->num_rows === 0) {
+            $total_town_convert = $override['override_amount'] + ($override['rebate_amount'] ?? 0);
             $stmt = $conn->prepare("INSERT INTO town_override (user_id, month, year, total_orders_amount, override_amount, converted, converted_at) VALUES (?, ?, ?, ?, ?, 1, NOW()) ON DUPLICATE KEY UPDATE total_orders_amount=VALUES(total_orders_amount), override_amount=VALUES(override_amount), converted=1, converted_at=NOW()");
-            $stmt->bind_param("iiidd", $uid, $month, $year, $override['total_orders'], $override['override_amount']);
+            $stmt->bind_param("iiidd", $uid, $month, $year, $override['total_orders'], $total_town_convert);
             $stmt->execute();
             $stmt->close();
 
-            credit_efunds($conn, $uid, $override['override_amount'], 'subsidy', 'town_override', null,
-                'Town override for ' . date('F Y') . ' (2% of ' . format_currency($override['total_orders']) . ' from ' . $override['town'] . ')');
+            $total_town_earning = $override['override_amount'] + ($override['rebate_amount'] ?? 0);
+            credit_efunds($conn, $uid, $total_town_earning, 'subsidy', 'town_override', null,
+                'Town override & rebate for ' . date('F Y') . ' (2% + 3.5% of ' . format_currency($override['total_orders']) . ' x ' . ($override['factor'] ?? 0.63) . ' from ' . $override['town'] . ')');
 
-            flash_message('success', 'Town override of ' . format_currency($override['override_amount']) . ' converted to e-funds!');
+            flash_message('success', 'Town override & rebate of ' . format_currency($total_town_earning) . ' converted to e-funds!');
         } else {
             flash_message('warning', 'Town override already converted for this month.');
         }
@@ -76,23 +78,33 @@ require_once '../includes/sidebar.php';
                         <?php else: ?>
                         <p class="text-sm">
                             As an <strong>Ice Cream House</strong> retailer in <strong><?php echo sanitize($override['town']); ?></strong>,
-                            you earn <strong>2%</strong> from all delivered orders of Starter Pack &amp; Premium Pack retailers in your town.
+                            you earn <strong>2%</strong> override and <strong>3.5%</strong> re-order rebate from all delivered orders of Starter Pack &amp; Premium Pack retailers in your town.
                         </p>
+                        <p class="text-sm mb-1"><strong>Override Formula:</strong> Town Orders x <?php echo $override['factor']; ?> x 2%</p>
+                        <p class="text-sm mb-1"><strong>Rebate Formula:</strong> Town Orders x <?php echo $override['factor']; ?> x 3.5%</p>
 
                         <hr>
                         <div class="row text-center mb-3">
-                            <div class="col-4">
+                            <div class="col-3">
                                 <p class="text-sm mb-0">Town Retailers' Orders</p>
                                 <h4><?php echo format_currency($override['total_orders']); ?></h4>
                             </div>
-                            <div class="col-4">
-                                <p class="text-sm mb-0">Override Rate</p>
-                                <h4>2%</h4>
-                            </div>
-                            <div class="col-4">
-                                <p class="text-sm mb-0">Your Override</p>
+                            <div class="col-3">
+                                <p class="text-sm mb-0">Override (2%)</p>
                                 <h4 class="<?php echo $override['eligible'] ? 'text-success' : 'text-muted'; ?>">
                                     <?php echo $override['eligible'] ? format_currency($override['override_amount']) : '₱0.00'; ?>
+                                </h4>
+                            </div>
+                            <div class="col-3">
+                                <p class="text-sm mb-0">Rebate (3.5%)</p>
+                                <h4 class="<?php echo $override['eligible'] ? 'text-success' : 'text-muted'; ?>">
+                                    <?php echo $override['eligible'] ? format_currency($override['rebate_amount']) : '₱0.00'; ?>
+                                </h4>
+                            </div>
+                            <div class="col-3">
+                                <p class="text-sm mb-0">Total</p>
+                                <h4 class="<?php echo $override['eligible'] ? 'text-success' : 'text-muted'; ?>">
+                                    <?php echo $override['eligible'] ? format_currency($override['override_amount'] + $override['rebate_amount']) : '₱0.00'; ?>
                                 </h4>
                             </div>
                         </div>
@@ -105,9 +117,10 @@ require_once '../includes/sidebar.php';
                             </div>
                             <?php else: ?>
                             <form method="POST">
+                                <?php $total_town_amount = $override['override_amount'] + ($override['rebate_amount'] ?? 0); ?>
                                 <button type="submit" name="convert" value="1" class="btn bg-gradient-success w-100"
-                                        onclick="return confirm('Convert <?php echo format_currency($override['override_amount']); ?> town override to e-funds?')">
-                                    <i class="material-icons">store</i> Convert <?php echo format_currency($override['override_amount']); ?> to E-Funds
+                                        onclick="return confirm('Convert <?php echo format_currency($total_town_amount); ?> town override & rebate to e-funds?')">
+                                    <i class="material-icons">store</i> Convert <?php echo format_currency($total_town_amount); ?> to E-Funds
                                 </button>
                             </form>
                             <?php endif; ?>
@@ -128,6 +141,7 @@ require_once '../includes/sidebar.php';
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Package</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Delivered Orders</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Your 2%</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Your 3.5%</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -137,12 +151,14 @@ require_once '../includes/sidebar.php';
                                         <td><span class="text-xs"><?php echo sanitize($b['package']); ?></span></td>
                                         <td><span class="text-xs"><?php echo format_currency($b['orders_total']); ?></span></td>
                                         <td><span class="text-xs font-weight-bold text-success"><?php echo format_currency($b['override']); ?></span></td>
+                                        <td><span class="text-xs font-weight-bold text-success"><?php echo format_currency($b['rebate']); ?></span></td>
                                     </tr>
                                     <?php endforeach; ?>
                                     <tr class="bg-light">
                                         <td class="ps-2" colspan="2"><span class="text-sm font-weight-bold">TOTAL</span></td>
                                         <td><span class="text-sm font-weight-bold"><?php echo format_currency($override['total_orders']); ?></span></td>
                                         <td><span class="text-sm font-weight-bold text-success"><?php echo format_currency($override['override_amount']); ?></span></td>
+                                        <td><span class="text-sm font-weight-bold text-success"><?php echo format_currency($override['rebate_amount']); ?></span></td>
                                     </tr>
                                 </tbody>
                             </table>

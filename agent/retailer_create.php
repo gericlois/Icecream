@@ -55,11 +55,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $auth_rep_relationship = trim($_POST['auth_rep_relationship'] ?? '');
     $auth_rep_gender = in_array($_POST['auth_rep_gender'] ?? '', ['M', 'F']) ? $_POST['auth_rep_gender'] : null;
 
-    // Freezer info (to be filled by admin)
+    // Freezer info
     $freezer_brand = '';
     $freezer_size = '';
     $freezer_serial = '';
     $freezer_status = '';
+    $freezer_code = trim($_POST['freezer_code'] ?? '');
 
     if (empty($last_name) || empty($first_name) || empty($username) || empty($password)) {
         $error = 'Last name, first name, username, and password are required.';
@@ -74,8 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $agent_id = current_user_id();
             $role = 'retailer';
             $status = 'inactive'; // Pending admin approval
-            $stmt2 = $conn->prepare("INSERT INTO users (username, password, full_name, last_name, first_name, middle_name, birthday, gender, sss_gsis, tin, tel_no, role, phone, address, province, town, barangay, purok_subdivision, email, application_type, package_info, auth_rep_name, auth_rep_relationship, auth_rep_gender, freezer_brand, freezer_size, freezer_serial, freezer_status, nao_name, salesman_name, agent_id, registered_by, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt2->bind_param("sssssssssssssssssssssssssssssssiis", $username, $hashed, $full_name, $last_name, $first_name, $middle_name, $birthday, $gender, $sss_gsis, $tin, $tel_no, $role, $phone, $address, $province, $town, $barangay, $purok_subdivision, $email, $application_type, $package_info, $auth_rep_name, $auth_rep_relationship, $auth_rep_gender, $freezer_brand, $freezer_size, $freezer_serial, $freezer_status, $nao_name, $salesman_name, $agent_id, $agent_id, $status);
+            $stmt2 = $conn->prepare("INSERT INTO users (username, password, full_name, last_name, first_name, middle_name, birthday, gender, sss_gsis, tin, tel_no, role, phone, address, province, town, barangay, purok_subdivision, email, application_type, package_info, auth_rep_name, auth_rep_relationship, auth_rep_gender, freezer_brand, freezer_size, freezer_serial, freezer_status, freezer_code, nao_name, salesman_name, agent_id, registered_by, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt2->bind_param("ssssssssssssssssssssssssssssssssiis", $username, $hashed, $full_name, $last_name, $first_name, $middle_name, $birthday, $gender, $sss_gsis, $tin, $tel_no, $role, $phone, $address, $province, $town, $barangay, $purok_subdivision, $email, $application_type, $package_info, $auth_rep_name, $auth_rep_relationship, $auth_rep_gender, $freezer_brand, $freezer_size, $freezer_serial, $freezer_status, $freezer_code, $nao_name, $salesman_name, $agent_id, $agent_id, $status);
             $stmt2->execute();
             $stmt2->close();
             flash_message('success', 'Retailer registered successfully! Pending admin approval before they can login.');
@@ -224,6 +225,16 @@ require_once '../includes/sidebar.php';
                                             <option value="<?php echo sanitize($pkg['slug']); ?>" <?php echo ($_POST['package_info'] ?? '') === $pkg['slug'] ? 'selected' : ''; ?>><?php echo sanitize($pkg['name']); ?></option>
                                             <?php endwhile; ?>
                                         </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Freezer Code -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="input-group input-group-outline <?php echo !empty($_POST['freezer_code'] ?? '') ? 'is-filled' : ''; ?> mb-3">
+                                        <label class="form-label">Freezer Code</label>
+                                        <input type="text" name="freezer_code" class="form-control" value="<?php echo sanitize($_POST['freezer_code'] ?? ''); ?>">
                                     </div>
                                 </div>
                             </div>
