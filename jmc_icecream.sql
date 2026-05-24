@@ -304,11 +304,12 @@ INSERT INTO `settings` (`id`, `setting_key`, `setting_value`, `updated_at`) VALU
 (3, 'subsidy_factor', '0.88', '2026-02-18 02:05:46'),
 (4, 'subsidy_rate', '0.05', '2026-02-18 02:05:46'),
 (5, 'company_name', 'JMC FOODIES ICE CREAM DISTRIBUTIONS', '2026-02-18 02:05:46'),
-(6, 'company_address', 'Blk 2 Lot 34 City Homes Subdivision Nancatyasan Urdaneta City, Pangasinan', '2026-02-18 02:05:46'),
+(6, 'company_address', '#116 Purok 1 Barangay Isla Santa Rosa, Nueva Ecija, Philippines 3101', '2026-02-18 02:05:46'),
 (7, 'company_tin', '000-420-482-187', '2026-02-18 02:05:46'),
-(8, 'company_hotline', '+63 991 802 1964', '2026-02-18 02:05:46'),
+(8, 'company_hotline', '0956 667 3569', '2026-02-18 02:05:46'),
 (9, 'agent_subsidy_min_orders', '8000', '2026-02-23 21:05:07'),
-(10, 'fda_min_orders', '8000', '2026-02-24 18:51:26');
+(10, 'fda_min_orders', '8000', '2026-02-24 18:51:26'),
+(11, 'company_email', 'jmcfoodiesdistributions@gmail.com', '2026-02-18 02:05:46');
 
 -- --------------------------------------------------------
 

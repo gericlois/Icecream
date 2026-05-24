@@ -44,6 +44,8 @@ require_once '../includes/sidebar.php';
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Subsidy Rate</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Min. Quota</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">FDA</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Rebate</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Commission</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Actions</th>
                                     </tr>
@@ -60,6 +62,8 @@ require_once '../includes/sidebar.php';
                                         <td><span class="text-xs font-weight-bold"><?php echo ($p['subsidy_rate'] * 100); ?>%</span></td>
                                         <td><span class="text-xs"><?php echo format_currency($p['subsidy_min_orders']); ?></span></td>
                                         <td><span class="text-xs font-weight-bold"><?php echo format_currency($p['freezer_display_allowance']); ?></span></td>
+                                        <td><span class="text-xs font-weight-bold"><?php echo round(($p['reorder_rebate_rate'] ?? 0) * 100, 2); ?>%</span></td>
+                                        <td><span class="text-xs font-weight-bold"><?php echo format_currency($p['registration_commission']); ?></span></td>
                                         <td><span class="badge bg-gradient-<?php echo $p['status'] === 'active' ? 'success' : 'secondary'; ?>"><?php echo ucfirst($p['status']); ?></span></td>
                                         <td>
                                             <a href="<?php echo BASE_URL; ?>/admin/package_edit.php?id=<?php echo $p['id']; ?>" class="btn btn-sm bg-gradient-dark mb-0">Edit</a>

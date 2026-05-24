@@ -62,6 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete'])) {
     $subsidy_rate = (float)($_POST['subsidy_rate'] ?? 0) / 100; // Convert % to decimal
     $subsidy_min_orders = (float)($_POST['subsidy_min_orders'] ?? 0);
     $freezer_display_allowance = (float)($_POST['freezer_display_allowance'] ?? 0);
+    $registration_commission = (float)($_POST['registration_commission'] ?? 0);
+    $reorder_rebate_rate = (float)($_POST['reorder_rebate_rate'] ?? 0) / 100;
 
     // Auto-generate slug from name if empty
     if (empty($slug) && !empty($name)) {
@@ -90,11 +92,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete'])) {
 
         if (empty($error)) {
             if ($id > 0) {
-                $stmt = $conn->prepare("UPDATE packages SET name=?, slug=?, description=?, sort_order=?, status=?, subsidy_rate=?, subsidy_min_orders=?, freezer_display_allowance=? WHERE id=?");
-                $stmt->bind_param("sssisdddi", $name, $slug, $description, $sort_order, $status, $subsidy_rate, $subsidy_min_orders, $freezer_display_allowance, $id);
+                $stmt = $conn->prepare("UPDATE packages SET name=?, slug=?, description=?, sort_order=?, status=?, subsidy_rate=?, subsidy_min_orders=?, freezer_display_allowance=?, registration_commission=?, reorder_rebate_rate=? WHERE id=?");
+                $stmt->bind_param("sssisdddddi", $name, $slug, $description, $sort_order, $status, $subsidy_rate, $subsidy_min_orders, $freezer_display_allowance, $registration_commission, $reorder_rebate_rate, $id);
             } else {
-                $stmt = $conn->prepare("INSERT INTO packages (name, slug, description, sort_order, status, subsidy_rate, subsidy_min_orders, freezer_display_allowance) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                $stmt->bind_param("sssisddd", $name, $slug, $description, $sort_order, $status, $subsidy_rate, $subsidy_min_orders, $freezer_display_allowance);
+                $stmt = $conn->prepare("INSERT INTO packages (name, slug, description, sort_order, status, subsidy_rate, subsidy_min_orders, freezer_display_allowance, registration_commission, reorder_rebate_rate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->bind_param("sssisddddd", $name, $slug, $description, $sort_order, $status, $subsidy_rate, $subsidy_min_orders, $freezer_display_allowance, $registration_commission, $reorder_rebate_rate);
             }
             $stmt->execute();
             $stmt->close();
@@ -189,6 +191,30 @@ require_once '../includes/sidebar.php';
                                         <input type="number" name="freezer_display_allowance" class="form-control" value="<?php echo $package['freezer_display_allowance'] ?? 0; ?>" step="1" min="0">
                                     </div>
                                     <p class="text-xs text-muted mt-n2">Fixed monthly allowance when retailer meets order quota</p>
+                                </div>
+                            </div>
+
+                            <h6 class="text-uppercase text-secondary text-xs font-weight-bolder mt-4 mb-2">Re-Order Rebate</h6>
+                            <hr class="horizontal dark mt-0 mb-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="input-group input-group-outline is-filled my-3">
+                                        <label class="form-label">Re-Order Rebate Rate (%)</label>
+                                        <input type="number" name="reorder_rebate_rate" class="form-control" value="<?php echo ($package['reorder_rebate_rate'] ?? 0) * 100; ?>" step="0.1" min="0" max="100">
+                                    </div>
+                                    <p class="text-xs text-muted mt-n2">Rebate % earned on retailer's re-orders (e.g. 1.5 = 1.5%)</p>
+                                </div>
+                            </div>
+
+                            <h6 class="text-uppercase text-secondary text-xs font-weight-bolder mt-4 mb-2">Agent Registration Commission</h6>
+                            <hr class="horizontal dark mt-0 mb-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="input-group input-group-outline is-filled my-3">
+                                        <label class="form-label">Commission Amount (₱)</label>
+                                        <input type="number" name="registration_commission" class="form-control" value="<?php echo $package['registration_commission'] ?? 0; ?>" step="1" min="0">
+                                    </div>
+                                    <p class="text-xs text-muted mt-n2">One-time commission paid to subdealer when they register a retailer with this package</p>
                                 </div>
                             </div>
 

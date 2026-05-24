@@ -51,6 +51,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         redirect(BASE_URL . '/retailer/cart.php');
     }
 
+    // Validate stock availability (deducted on placement)
+    $stock_errors = [];
+    foreach ($cart as $item) {
+        $available = get_flavor_stock($conn, (int)$item['product_flavor_id']);
+        if ((int)$item['quantity_packs'] > $available) {
+            $stock_errors[] = $item['product_name'] . ' - ' . $item['flavor_name'] . ' (only ' . $available . ' pack' . ($available === 1 ? '' : 's') . ' left)';
+        }
+    }
+    if (!empty($stock_errors)) {
+        flash_message('danger', 'Insufficient stock for: ' . implode('; ', $stock_errors) . '. Please adjust your cart.');
+        redirect(BASE_URL . '/retailer/cart.php');
+    }
+
     // Create order
     $order_number = generate_order_number($conn);
     $agent_id = $_SESSION['agent_id'];
@@ -73,6 +86,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         $stmt->execute();
     }
     $stmt->close();
+
+    // Deduct stock for each item (reserved on placement, returned if cancelled)
+    foreach ($cart as $item) {
+        adjust_stock($conn, (int)$item['product_flavor_id'], -(int)$item['quantity_packs'], 'order', 'order', $order_id, 'Order ' . $order_number, $uid);
+    }
 
     // Clear cart
     $_SESSION['cart'] = [];

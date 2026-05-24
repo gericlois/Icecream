@@ -28,9 +28,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['withdraw'])) {
     } elseif ($w_method === 'gcash' && (empty($w_gcash_name) || empty($w_gcash_number))) {
         flash_message('danger', 'Please provide GCash account name and number.');
     } else {
-        $bal = (float)$conn->query("SELECT efunds_balance FROM users WHERE id = $uid")->fetch_assoc()['efunds_balance'];
+        $bal = (float)$conn->query("SELECT earnings_balance FROM users WHERE id = $uid")->fetch_assoc()['earnings_balance'];
         if ($w_amount > $bal) {
-            flash_message('danger', 'Insufficient e-funds balance. You have ' . format_currency($bal) . '.');
+            flash_message('danger', 'Insufficient earnings balance. You have ' . format_currency($bal) . '.');
         } else {
             $stmt = $conn->prepare("INSERT INTO withdrawal_requests (user_id, amount, method, gcash_name, gcash_number) VALUES (?, ?, ?, ?, ?)");
             $stmt->bind_param("idsss", $uid, $w_amount, $w_method, $w_gcash_name, $w_gcash_number);
@@ -116,8 +116,35 @@ $stmt->close();
 $projected_total = $subsidy['grand_total'] + $approved_pending_total;
 $projected_pct = $min > 0 ? min(100, round(($projected_total / $min) * 100, 1)) : 0;
 
-// Get e-funds balance for withdrawal
-$user_balance = (float)$conn->query("SELECT efunds_balance FROM users WHERE id = $uid")->fetch_assoc()['efunds_balance'];
+// Registration commissions
+$comm_stmt = $conn->prepare("
+    SELECT ac.*, u.full_name as retailer_name, p.name as package_name
+    FROM agent_commissions ac
+    JOIN users u ON ac.retailer_id = u.id
+    LEFT JOIN packages p ON ac.package_slug = p.slug
+    WHERE ac.agent_id = ?
+    ORDER BY ac.created_at DESC
+");
+$comm_stmt->bind_param("i", $uid);
+$comm_stmt->execute();
+$commissions = $comm_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$comm_stmt->close();
+
+$total_commission_earned = 0;
+$total_commission_pending = 0;
+foreach ($commissions as $c) {
+    if ($c['status'] === 'credited') {
+        $total_commission_earned += (float)$c['amount'];
+    } else {
+        $total_commission_pending += (float)$c['amount'];
+    }
+}
+
+// Package commission rates for display
+$comm_rates = $conn->query("SELECT name, slug, registration_commission FROM packages WHERE status = 'active' AND registration_commission > 0 ORDER BY sort_order");
+
+// Get earnings balance for withdrawal
+$user_balance = (float)$conn->query("SELECT earnings_balance FROM users WHERE id = $uid")->fetch_assoc()['earnings_balance'];
 
 // Recent withdrawal requests
 $withdrawal_requests = $conn->query("SELECT * FROM withdrawal_requests WHERE user_id = $uid ORDER BY created_at DESC LIMIT 5");
@@ -185,7 +212,7 @@ require_once '../includes/sidebar.php';
                         <div class="alert alert-light text-sm mb-0 border">
                             <i class="material-icons align-middle text-success" style="font-size:18px;">check_circle</i>
                             Minimum re-order reached! Your Gross Retail Over-Ride of <strong><?php echo format_currency($subsidy['total_subsidy']); ?></strong> is ready.
-                            <a href="<?php echo BASE_URL; ?>/agent/subsidy.php" class="text-primary font-weight-bold">Convert to E-Funds &rarr;</a>
+                            <a href="<?php echo BASE_URL; ?>/agent/subsidy.php" class="text-primary font-weight-bold">Claim to Earnings &rarr;</a>
                         </div>
                         <?php endif; ?>
                     </div>
@@ -331,6 +358,76 @@ require_once '../includes/sidebar.php';
         </div>
         <?php endif; ?>
 
+        <!-- Registration Commissions -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header pb-0">
+                        <div class="row align-items-center">
+                            <div class="col-8">
+                                <h6><i class="material-icons align-middle text-info">card_giftcard</i> Registration Commissions</h6>
+                            </div>
+                            <div class="col-4 text-end">
+                                <span class="text-sm">Pending: <strong class="text-warning"><?php echo format_currency($total_commission_pending); ?></strong></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body px-0 pt-0 pb-2">
+                        <div class="table-responsive p-0">
+                            <table class="table align-items-center mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4">Date</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Retailer</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Package</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Commission</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (empty($commissions)): ?>
+                                    <tr><td colspan="5" class="text-center text-sm py-4">No registration commissions yet. Register retailers to earn!</td></tr>
+                                    <?php else: ?>
+                                    <?php foreach ($commissions as $c): ?>
+                                    <tr>
+                                        <td class="ps-4"><span class="text-xs"><?php echo date('M d, Y', strtotime($c['created_at'])); ?></span></td>
+                                        <td><span class="text-xs font-weight-bold"><?php echo sanitize($c['retailer_name']); ?></span></td>
+                                        <td><span class="text-xs"><?php echo sanitize($c['package_name'] ?? $c['package_slug']); ?></span></td>
+                                        <td><span class="text-xs font-weight-bold text-success"><?php echo format_currency($c['amount']); ?></span></td>
+                                        <td><span class="badge bg-gradient-<?php echo $c['status'] === 'credited' ? 'success' : 'warning'; ?>"><?php echo ucfirst($c['status']); ?></span></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                    <tr class="bg-light">
+                                        <td class="ps-4" colspan="3"><span class="text-sm font-weight-bold">TOTAL EARNED</span></td>
+                                        <td><span class="text-sm font-weight-bold text-success"><?php echo format_currency($total_commission_earned + $total_commission_pending); ?></span></td>
+                                        <td></td>
+                                    </tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Commission Rates Card -->
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header pb-0"><h6>Commission per Registration</h6></div>
+                    <div class="card-body pt-2">
+                        <?php while ($cr = $comm_rates->fetch_assoc()): ?>
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                            <div>
+                                <h6 class="text-sm mb-0"><?php echo sanitize($cr['name']); ?></h6>
+                            </div>
+                            <span class="text-sm font-weight-bold text-success"><?php echo format_currency($cr['registration_commission']); ?></span>
+                        </div>
+                        <?php endwhile; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Withdraw My Earnings -->
         <div class="row mb-4">
             <div class="col-lg-8">
@@ -340,7 +437,7 @@ require_once '../includes/sidebar.php';
                     </div>
                     <div class="card-body">
                         <p class="text-sm mb-2">
-                            E-Funds Balance: <strong class="text-success"><?php echo format_currency($user_balance); ?></strong>
+                            Earnings Balance: <strong class="text-success"><?php echo format_currency($user_balance); ?></strong>
                         </p>
                         <div class="alert alert-light text-sm border mb-3">
                             <strong>Withdrawal Processing:</strong><br>

@@ -64,6 +64,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         redirect(BASE_URL . '/agent/order_create.php');
     }
 
+    // Validate stock availability (deducted on placement)
+    $stock_errors = [];
+    foreach ($order_items as $oi) {
+        $available = get_flavor_stock($conn, (int)$oi['product_flavor_id']);
+        if ((int)$oi['quantity_packs'] > $available) {
+            $stock_errors[] = $oi['product_name'] . ' - ' . $oi['flavor_name'] . ' (only ' . $available . ' pack' . ($available === 1 ? '' : 's') . ' left)';
+        }
+    }
+    if (!empty($stock_errors)) {
+        flash_message('danger', 'Insufficient stock for: ' . implode('; ', $stock_errors) . '.');
+        redirect(BASE_URL . '/agent/order_create.php');
+    }
+
     $discount_pct = ($payment_method === 'efunds') ? (float)get_setting($conn, 'efunds_discount_percent') : 0;
     $discount_amount = round($subtotal * ($discount_pct / 100), 2);
     $total = $subtotal - $discount_amount;
@@ -85,13 +98,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     }
     $stmt->close();
 
+    // Deduct stock for each item (reserved on placement, returned if cancelled)
+    foreach ($order_items as $oi) {
+        adjust_stock($conn, (int)$oi['product_flavor_id'], -(int)$oi['quantity_packs'], 'order', 'order', $order_id, 'Order ' . $order_number, $uid);
+    }
+
     flash_message('success', 'Order ' . $order_number . ' placed successfully for retailer!');
     redirect(BASE_URL . '/agent/order_view.php?id=' . $order_id);
 }
 
 // Get products for catalog
 $products = $conn->query("
-    SELECT p.name as product_name, p.qty_per_pack, p.unit_price, pf.id as flavor_id, pf.flavor_name
+    SELECT p.name as product_name, p.qty_per_pack, p.unit_price, pf.id as flavor_id, pf.flavor_name, pf.stock_packs
     FROM products p JOIN product_flavors pf ON p.id = pf.product_id
     WHERE p.status = 'active' AND pf.status = 'active'
     ORDER BY p.sort_order, pf.sort_order
@@ -121,19 +139,30 @@ require_once '../includes/sidebar.php';
                                             <th>Flavor</th>
                                             <th>Pack Size</th>
                                             <th>Price/Unit</th>
+                                            <th class="text-center">Stock</th>
                                             <th style="width:80px;">Packs</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php $i = 0; while ($p = $products->fetch_assoc()): ?>
-                                        <tr>
+                                        <?php $i = 0; while ($p = $products->fetch_assoc()):
+                                            $stock = (int)$p['stock_packs'];
+                                            $out = $stock <= 0;
+                                        ?>
+                                        <tr class="<?php echo $out ? 'opacity-6' : ''; ?>">
                                             <td class="text-sm"><?php echo sanitize($p['product_name']); ?></td>
                                             <td class="text-sm"><?php echo sanitize($p['flavor_name']); ?></td>
                                             <td class="text-sm"><?php echo $p['qty_per_pack']; ?>/pack</td>
                                             <td class="text-sm"><?php echo format_currency($p['unit_price']); ?></td>
+                                            <td class="text-center">
+                                                <?php if ($out): ?>
+                                                <span class="badge bg-gradient-danger">Out</span>
+                                                <?php else: ?>
+                                                <span class="text-sm"><?php echo $stock; ?></span>
+                                                <?php endif; ?>
+                                            </td>
                                             <td>
                                                 <input type="hidden" name="items[<?php echo $i; ?>][flavor_id]" value="<?php echo $p['flavor_id']; ?>">
-                                                <input type="number" name="items[<?php echo $i; ?>][packs]" class="form-control form-control-sm qty-input" value="0" min="0" style="width:60px;">
+                                                <input type="number" name="items[<?php echo $i; ?>][packs]" class="form-control form-control-sm qty-input" value="0" min="0" max="<?php echo $stock; ?>" style="width:60px;" <?php echo $out ? 'disabled' : ''; ?>>
                                             </td>
                                         </tr>
                                         <?php $i++; endwhile; ?>

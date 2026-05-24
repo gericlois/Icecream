@@ -26,10 +26,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['convert'])) {
             $stmt->execute();
             $stmt->close();
 
-            credit_efunds($conn, $uid, $fda['allowance'], 'fda', 'fda', null,
+            credit_earnings($conn, $uid, $fda['allowance'], 'fda', 'fda', null,
                 'Freezer Display Allowance for ' . date('F Y') . ' (' . format_currency($fda['allowance']) . ')');
 
-            flash_message('success', 'Freezer Display Allowance of ' . format_currency($fda['allowance']) . ' converted to e-funds!');
+            flash_message('success', 'Freezer Display Allowance of ' . format_currency($fda['allowance']) . ' added to your earnings!');
         } else {
             flash_message('warning', 'Allowance already converted for this month.');
         }
@@ -102,13 +102,13 @@ require_once '../includes/sidebar.php';
                             <?php if ($already_converted): ?>
                             <div class="alert alert-success text-white">
                                 <i class="material-icons align-middle">check_circle</i>
-                                Freezer Display Allowance already converted to e-funds for this month!
+                                Freezer Display Allowance already claimed to your earnings for this month!
                             </div>
                             <?php else: ?>
                             <form method="POST">
                                 <button type="submit" name="convert" value="1" class="btn bg-gradient-success w-100"
-                                        onclick="return confirm('Convert <?php echo format_currency($fda['allowance']); ?> Freezer Display Allowance to e-funds?')">
-                                    <i class="material-icons">ac_unit</i> Convert <?php echo format_currency($fda['allowance']); ?> to E-Funds
+                                        onclick="return confirm('Claim <?php echo format_currency($fda['allowance']); ?> Freezer Display Allowance to your earnings?')">
+                                    <i class="material-icons">ac_unit</i> Claim <?php echo format_currency($fda['allowance']); ?> to Earnings
                                 </button>
                             </form>
                             <?php endif; ?>

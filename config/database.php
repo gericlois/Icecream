@@ -1,24 +1,30 @@
 <?php
 /*
  * DATABASE CONFIGURATION
- * =====================
- * For LOCAL (XAMPP):
- *   $db_host = 'localhost';
- *   $db_user = 'root';
- *   $db_pass = '';
- *   $db_name = 'jmc_icecream';
- *
- * For INFINITYFREE:
- *   $db_host = 'sql__.infinityfree.com';  (check your panel for exact host)
- *   $db_user = 'if0_XXXXXXX';             (from InfinityFree MySQL panel)
- *   $db_pass = 'your_password_here';       (from InfinityFree MySQL panel)
- *   $db_name = 'if0_XXXXXXX_jmc_icecream'; (from InfinityFree MySQL panel)
+ * =============================================
+ * Auto-detects environment:
+ *   - Accessed via localhost / 127.0.0.1  -> local XAMPP database
+ *   - Anywhere else (deployed)            -> live InfinityFree database
+ * No manual swapping needed before deploy.
  */
 
-$db_host = 'localhost';
-$db_user = 'root';
-$db_pass = '';
-$db_name = 'jmc_icecream';
+$host_header = $_SERVER['HTTP_HOST'] ?? '';
+$is_local = (strpos($host_header, 'localhost') !== false)
+         || (strpos($host_header, '127.0.0.1') !== false);
+
+if ($is_local) {
+    // Local XAMPP
+    $db_host = 'localhost';
+    $db_user = 'root';
+    $db_pass = '';
+    $db_name = 'jmc_icecream';
+} else {
+    // Live (InfinityFree)
+    $db_host = 'sql306.infinityfree.com';
+    $db_user = 'if0_41104260';
+    $db_pass = 'jmcIcecream2026';
+    $db_name = 'if0_41104260_jmc';
+}
 
 $conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
 if ($conn->connect_error) {

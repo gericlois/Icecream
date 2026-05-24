@@ -19,7 +19,7 @@ if (!empty($search)) {
 
 $products = $conn->query("
     SELECT p.id as product_id, p.name as product_name, p.qty_per_pack, p.unit_price,
-           pf.id as flavor_id, pf.flavor_name
+           pf.id as flavor_id, pf.flavor_name, pf.stock_packs, pf.low_stock_threshold
     FROM products p
     JOIN product_flavors pf ON p.id = pf.product_id
     WHERE p.status = 'active' AND pf.status = 'active' $where
@@ -35,7 +35,9 @@ while ($row = $products->fetch_assoc()) {
     ];
     $grouped[$row['product_name']]['flavors'][] = [
         'id' => $row['flavor_id'],
-        'name' => $row['flavor_name']
+        'name' => $row['flavor_name'],
+        'stock' => (int)$row['stock_packs'],
+        'threshold' => (int)$row['low_stock_threshold']
     ];
 }
 
@@ -84,9 +86,14 @@ require_once '../includes/sidebar.php';
                 <div id="<?php echo $collapseId; ?>" class="accordion-collapse collapse <?php echo $idx === 0 ? 'show' : ''; ?>" aria-labelledby="heading<?php echo $idx; ?>" data-bs-parent="#catalogAccordion">
                     <div class="accordion-body p-3">
                         <div class="row">
-                            <?php foreach ($data['flavors'] as $flavor): ?>
+                            <?php foreach ($data['flavors'] as $flavor):
+                                $stock = (int)$flavor['stock'];
+                                $threshold = (int)$flavor['threshold'];
+                                $out = $stock <= 0;
+                                $low = !$out && $threshold > 0 && $stock <= $threshold;
+                            ?>
                             <div class="col-6 col-sm-6 col-lg-4 col-xl-3 mb-3">
-                                <div class="card product-card h-100 shadow-sm">
+                                <div class="card product-card h-100 shadow-sm <?php echo $out ? 'opacity-7' : ''; ?>">
                                     <div class="card-body text-center p-3">
                                         <?php if (file_exists(__DIR__ . '/../' . $img_path)): ?>
                                         <img src="<?php echo BASE_URL . '/' . $img_path; ?>" alt="<?php echo sanitize($product_name); ?>" style="width:60px;height:60px;object-fit:contain;" class="mb-2">
@@ -99,12 +106,25 @@ require_once '../includes/sidebar.php';
                                         <p class="text-sm font-weight-bold text-primary mb-2">
                                             Pack Total: <?php echo format_currency($data['info']['qty_per_pack'] * $data['info']['unit_price']); ?>
                                         </p>
+                                        <p class="mb-2">
+                                            <?php if ($out): ?>
+                                            <span class="badge bg-gradient-danger">Out of Stock</span>
+                                            <?php elseif ($low): ?>
+                                            <span class="badge bg-gradient-warning">Low Stock: <?php echo $stock; ?> pack<?php echo $stock === 1 ? '' : 's'; ?></span>
+                                            <?php else: ?>
+                                            <span class="badge bg-gradient-info"><?php echo $stock; ?> pack<?php echo $stock === 1 ? '' : 's'; ?> available</span>
+                                            <?php endif; ?>
+                                        </p>
+                                        <?php if ($out): ?>
+                                        <button class="btn btn-sm btn-outline-secondary mb-0 w-100" disabled>Out of Stock</button>
+                                        <?php else: ?>
                                         <div class="d-flex align-items-center justify-content-center gap-2">
-                                            <input type="number" class="form-control form-control-sm qty-input" value="1" min="1" style="width:60px;">
+                                            <input type="number" class="form-control form-control-sm qty-input" value="1" min="1" max="<?php echo $stock; ?>" style="width:60px;">
                                             <button class="btn btn-sm bg-gradient-primary mb-0" onclick="addToCart(<?php echo $flavor['id']; ?>, this)">
                                                 Add
                                             </button>
                                         </div>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>

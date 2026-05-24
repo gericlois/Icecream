@@ -136,9 +136,10 @@ INSERT INTO `product_flavors` (`product_id`, `flavor_name`, `sort_order`) VALUES
 INSERT INTO `settings` (`setting_key`, `setting_value`) VALUES
 ('efunds_discount_percent', '0'),
 ('subsidy_min_orders', '6000'),
-('subsidy_factor', '0.63'),
+('subsidy_factor', '0.88'),
 ('subsidy_rate', '0.05'),
 ('company_name', 'JMC FOODIES ICE CREAM DISTRIBUTIONS'),
-('company_address', 'Blk 2 Lot 34 City Homes Subdivision Nancatyasan Urdaneta City, Pangasinan'),
+('company_address', '#116 Purok 1 Barangay Isla Santa Rosa, Nueva Ecija, Philippines 3101'),
 ('company_tin', '000-420-482-187'),
-('company_hotline', '+63 991 802 1964');
+('company_hotline', '0956 667 3569'),
+('company_email', 'jmcfoodiesdistributions@gmail.com');

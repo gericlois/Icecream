@@ -27,6 +27,7 @@ CREATE TABLE `users` (
     `purok_subdivision` VARCHAR(100) DEFAULT NULL,
     `email` VARCHAR(100) DEFAULT NULL,
     `efunds_balance` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    `earnings_balance` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
     `application_type` ENUM('cod','7days_term') DEFAULT NULL,
     `package_info` VARCHAR(100) DEFAULT NULL,
     `payment_type` ENUM('cash','check','online_transfer') DEFAULT NULL,
@@ -38,7 +39,6 @@ CREATE TABLE `users` (
     `freezer_size` VARCHAR(50) DEFAULT NULL,
     `freezer_serial` VARCHAR(100) DEFAULT NULL,
     `freezer_status` VARCHAR(50) DEFAULT NULL,
-    `freezer_code` VARCHAR(50) DEFAULT NULL,
     `nao_name` VARCHAR(100) DEFAULT NULL,
     `salesman_name` VARCHAR(100) DEFAULT NULL,
     `registered_by` INT DEFAULT NULL,
@@ -69,7 +69,25 @@ CREATE TABLE `product_flavors` (
     `flavor_name` VARCHAR(100) NOT NULL,
     `status` ENUM('active','inactive') NOT NULL DEFAULT 'active',
     `sort_order` INT NOT NULL DEFAULT 0,
+    `stock_packs` INT NOT NULL DEFAULT 0,
+    `low_stock_threshold` INT NOT NULL DEFAULT 0,
     FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Inventory movement log (per flavor, counted in packs)
+CREATE TABLE `inventory_transactions` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `product_flavor_id` INT NOT NULL,
+    `change_packs` INT NOT NULL,
+    `balance_after` INT NOT NULL,
+    `type` ENUM('restock','adjustment','order','cancel_return') NOT NULL,
+    `reference_type` VARCHAR(30) DEFAULT NULL,
+    `reference_id` INT DEFAULT NULL,
+    `notes` TEXT DEFAULT NULL,
+    `created_by` INT DEFAULT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`product_flavor_id`) REFERENCES `product_flavors`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- Orders
@@ -129,6 +147,23 @@ CREATE TABLE `efunds_transactions` (
     FOREIGN KEY (`processed_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
+-- Earnings ledger (incentives: subsidy, freezer allowance, town/agent over-ride, commission)
+-- Separate from efunds_transactions (the purchase/reload wallet)
+CREATE TABLE `earnings_transactions` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL,
+    `type` VARCHAR(30) NOT NULL,
+    `amount` DECIMAL(12,2) NOT NULL,
+    `balance_after` DECIMAL(12,2) NOT NULL,
+    `reference_type` VARCHAR(30) DEFAULT NULL,
+    `reference_id` INT DEFAULT NULL,
+    `description` TEXT DEFAULT NULL,
+    `processed_by` INT DEFAULT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`),
+    FOREIGN KEY (`processed_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
 -- Reload requests
 CREATE TABLE `reload_requests` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -169,21 +204,6 @@ CREATE TABLE `town_override` (
     `year` INT NOT NULL,
     `total_orders_amount` DECIMAL(12,2) NOT NULL DEFAULT 0,
     `override_amount` DECIMAL(12,2) NOT NULL DEFAULT 0,
-    `converted` TINYINT(1) NOT NULL DEFAULT 0,
-    `converted_at` DATETIME DEFAULT NULL,
-    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY `unique_user_month` (`user_id`, `month`, `year`),
-    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`)
-) ENGINE=InnoDB;
-
--- Freezer Partner (Ice Cream House gets 3% from retailers with matching freezer code)
-CREATE TABLE `freezer_partner` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `user_id` INT NOT NULL,
-    `month` INT NOT NULL,
-    `year` INT NOT NULL,
-    `total_orders_amount` DECIMAL(12,2) NOT NULL DEFAULT 0,
-    `partner_amount` DECIMAL(12,2) NOT NULL DEFAULT 0,
     `converted` TINYINT(1) NOT NULL DEFAULT 0,
     `converted_at` DATETIME DEFAULT NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS `users` (
     `purok_subdivision` VARCHAR(100) DEFAULT NULL,
     `email` VARCHAR(100) DEFAULT NULL,
     `efunds_balance` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    `earnings_balance` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
     `application_type` ENUM('cod','7days_term') DEFAULT NULL,
     `package_info` VARCHAR(100) DEFAULT NULL,
     `payment_type` ENUM('cash','check','online_transfer') DEFAULT NULL,
@@ -62,7 +63,24 @@ CREATE TABLE IF NOT EXISTS `product_flavors` (
     `flavor_name` VARCHAR(100) NOT NULL,
     `status` ENUM('active','inactive') NOT NULL DEFAULT 'active',
     `sort_order` INT NOT NULL DEFAULT 0,
+    `stock_packs` INT NOT NULL DEFAULT 0,
+    `low_stock_threshold` INT NOT NULL DEFAULT 0,
     FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `inventory_transactions` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `product_flavor_id` INT NOT NULL,
+    `change_packs` INT NOT NULL,
+    `balance_after` INT NOT NULL,
+    `type` ENUM('restock','adjustment','order','cancel_return') NOT NULL,
+    `reference_type` VARCHAR(30) DEFAULT NULL,
+    `reference_id` INT DEFAULT NULL,
+    `notes` TEXT DEFAULT NULL,
+    `created_by` INT DEFAULT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_flavor` (`product_flavor_id`),
+    KEY `idx_reference` (`reference_type`, `reference_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `orders` (
@@ -111,6 +129,21 @@ CREATE TABLE IF NOT EXISTS `efunds_transactions` (
     `description` TEXT DEFAULT NULL,
     `processed_by` INT DEFAULT NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `earnings_transactions` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL,
+    `type` VARCHAR(30) NOT NULL,
+    `amount` DECIMAL(12,2) NOT NULL,
+    `balance_after` DECIMAL(12,2) NOT NULL,
+    `reference_type` VARCHAR(30) DEFAULT NULL,
+    `reference_id` INT DEFAULT NULL,
+    `description` TEXT DEFAULT NULL,
+    `processed_by` INT DEFAULT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_user` (`user_id`),
+    KEY `idx_type` (`type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `reload_requests` (
@@ -266,11 +299,12 @@ INSERT INTO `packages` (`name`, `slug`, `subsidy_rate`, `subsidy_min_orders`, `f
 INSERT INTO `settings` (`setting_key`, `setting_value`) VALUES
 ('efunds_discount_percent', '0'),
 ('subsidy_min_orders', '6000'),
-('subsidy_factor', '0.63'),
+('subsidy_factor', '0.88'),
 ('subsidy_rate', '0.05'),
 ('company_name', 'JMC FOODIES ICE CREAM DISTRIBUTIONS'),
-('company_address', 'Blk 2 Lot 34 City Homes Subdivision Nancatyasan Urdaneta City, Pangasinan'),
+('company_address', '#116 Purok 1 Barangay Isla Santa Rosa, Nueva Ecija, Philippines 3101'),
 ('company_tin', '000-420-482-187'),
-('company_hotline', '+63 991 802 1964'),
+('company_hotline', '0956 667 3569'),
+('company_email', 'jmcfoodiesdistributions@gmail.com'),
 ('agent_subsidy_min_orders', '8000'),
 ('fda_min_orders', '8000');

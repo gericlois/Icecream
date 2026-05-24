@@ -12,8 +12,8 @@ require_role(['retailer']);
 
 $uid = current_user_id();
 
-// Get balance
-$user = $conn->query("SELECT efunds_balance FROM users WHERE id = $uid")->fetch_assoc();
+// Get balances
+$user = $conn->query("SELECT efunds_balance, earnings_balance FROM users WHERE id = $uid")->fetch_assoc();
 
 // Recent orders
 $recent = $conn->query("SELECT * FROM orders WHERE user_id = $uid ORDER BY created_at DESC LIMIT 5");
@@ -54,6 +54,25 @@ require_once '../includes/sidebar.php';
                     <hr class="dark horizontal my-0">
                     <div class="card-footer p-3">
                         <span class="text-sm text-primary">View E-Funds &rarr;</span>
+                    </div>
+                </div>
+                </a>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <a href="<?php echo BASE_URL; ?>/retailer/earnings.php" class="text-decoration-none">
+                <div class="card" style="cursor:pointer;">
+                    <div class="card-header p-3 pt-2">
+                        <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute">
+                            <i class="material-icons opacity-10">savings</i>
+                        </div>
+                        <div class="text-end pt-1">
+                            <p class="text-sm mb-0 text-secondary">Earnings Balance</p>
+                            <h4 class="mb-0 text-dark"><?php echo format_currency($user['earnings_balance']); ?></h4>
+                        </div>
+                    </div>
+                    <hr class="dark horizontal my-0">
+                    <div class="card-footer p-3">
+                        <span class="text-sm text-primary">View Earnings &rarr;</span>
                     </div>
                 </div>
                 </a>

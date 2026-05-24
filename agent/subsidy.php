@@ -26,10 +26,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['convert'])) {
             $stmt->execute();
             $stmt->close();
 
-            credit_efunds($conn, $uid, $subsidy['total_subsidy'], 'subsidy', 'subsidy', null,
+            credit_earnings($conn, $uid, $subsidy['total_subsidy'], 'override', 'subsidy', null,
                 'Over-ride for ' . date('F Y') . ' (' . format_currency($subsidy['grand_total']) . ' total retailer orders)');
 
-            flash_message('success', 'Over-ride of ' . format_currency($subsidy['total_subsidy']) . ' converted to e-funds!');
+            flash_message('success', 'Over-ride of ' . format_currency($subsidy['total_subsidy']) . ' added to your earnings!');
         } else {
             flash_message('warning', 'Over-ride already converted for this month.');
         }
@@ -68,7 +68,6 @@ require_once '../includes/sidebar.php';
                             To qualify your account, you must encourage every retailer to reach a minimum of
                             <strong>₱8,000.00</strong> re-order monthly or <strong>₱2,000.00</strong> re-orders weekly.
                         </p>
-                        <p class="text-sm mb-1"><strong>Formula:</strong> Total Re-order x 0.63 x 5%</p>
 
                         <hr>
                         <div class="row text-center mb-3">
@@ -102,13 +101,13 @@ require_once '../includes/sidebar.php';
                             <?php if ($already_converted): ?>
                             <div class="alert alert-success text-white">
                                 <i class="material-icons align-middle">check_circle</i>
-                                Over-ride already converted to e-funds for this month!
+                                Over-ride already claimed to your earnings for this month!
                             </div>
                             <?php else: ?>
                             <form method="POST">
                                 <button type="submit" name="convert" value="1" class="btn bg-gradient-success w-100"
-                                        onclick="return confirm('Convert <?php echo format_currency($subsidy['total_subsidy']); ?> over-ride to e-funds?')">
-                                    <i class="material-icons">bolt</i> Convert <?php echo format_currency($subsidy['total_subsidy']); ?> to E-Funds
+                                        onclick="return confirm('Claim <?php echo format_currency($subsidy['total_subsidy']); ?> over-ride to your earnings?')">
+                                    <i class="material-icons">bolt</i> Claim <?php echo format_currency($subsidy['total_subsidy']); ?> to Earnings
                                 </button>
                             </form>
                             <?php endif; ?>

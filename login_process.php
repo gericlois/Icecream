@@ -62,6 +62,9 @@ switch ($user['role']) {
     case 'retailer':
         header('Location: ' . BASE_URL . '/retailer/index.php');
         break;
+    case 'freezer_partner':
+        header('Location: ' . BASE_URL . '/freezer-partner/index.php');
+        break;
     default:
         header('Location: ' . BASE_URL . '/index.php');
 }

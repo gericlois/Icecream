@@ -72,8 +72,8 @@ $items = $conn->query("SELECT * FROM order_items WHERE order_id = $id ORDER BY i
     <div class="receipt-container">
         <div class="header">
             <h2><?php echo APP_NAME; ?></h2>
-            <p><?php echo COMPANY_ADDRESS; ?></p>
-            <p>TIN: <?php echo COMPANY_TIN; ?> &nbsp; | &nbsp; Customer Hotline: <?php echo COMPANY_HOTLINE; ?></p>
+            <p>Office Address: <?php echo COMPANY_ADDRESS; ?></p>
+            <p>Email: <?php echo COMPANY_EMAIL; ?> &nbsp; | &nbsp; Mobile#: <?php echo COMPANY_HOTLINE; ?></p>
         </div>
 
         <div class="receipt-title">DELIVERY RECEIPT</div>

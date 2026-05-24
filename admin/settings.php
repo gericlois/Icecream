@@ -12,7 +12,7 @@ require_role(['admin']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $keys = ['efunds_discount_percent', 'subsidy_factor', 'agent_subsidy_min_orders',
-             'company_name', 'company_address', 'company_tin', 'company_hotline'];
+             'company_name', 'company_address', 'company_tin', 'company_hotline', 'company_email'];
     foreach ($keys as $key) {
         if (isset($_POST[$key])) {
             $val = trim($_POST[$key]);
@@ -59,7 +59,7 @@ require_once '../includes/sidebar.php';
                                 <div class="col-md-6">
                                     <div class="input-group input-group-outline is-filled my-3">
                                         <label class="form-label">Subsidy Factor</label>
-                                        <input type="number" name="subsidy_factor" class="form-control" value="<?php echo sanitize($settings['subsidy_factor'] ?? '0.63'); ?>" step="0.01" min="0" max="1">
+                                        <input type="number" name="subsidy_factor" class="form-control" value="<?php echo sanitize($settings['subsidy_factor'] ?? '0.88'); ?>" step="0.01" min="0" max="1">
                                     </div>
                                 </div>
                             </div>
@@ -85,6 +85,10 @@ require_once '../includes/sidebar.php';
                                 <label class="form-label">Address</label>
                                 <input type="text" name="company_address" class="form-control" value="<?php echo sanitize($settings['company_address'] ?? ''); ?>">
                             </div>
+                            <div class="input-group input-group-outline is-filled my-3">
+                                <label class="form-label">Email</label>
+                                <input type="text" name="company_email" class="form-control" value="<?php echo sanitize($settings['company_email'] ?? ''); ?>">
+                            </div>
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="input-group input-group-outline is-filled my-3">
@@ -94,7 +98,7 @@ require_once '../includes/sidebar.php';
                                 </div>
                                 <div class="col-md-6">
                                     <div class="input-group input-group-outline is-filled my-3">
-                                        <label class="form-label">Hotline</label>
+                                        <label class="form-label">Mobile #</label>
                                         <input type="text" name="company_hotline" class="form-control" value="<?php echo sanitize($settings['company_hotline'] ?? ''); ?>">
                                     </div>
                                 </div>

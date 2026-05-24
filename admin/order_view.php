@@ -44,6 +44,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         flash_message('success', 'Order marked as delivered.');
     } elseif ($action === 'cancel') {
         $order_check = $conn->query("SELECT * FROM orders WHERE id = $id")->fetch_assoc();
+        // Return reserved stock to inventory (stock is deducted at placement)
+        if ($order_check && $order_check['status'] !== 'cancelled') {
+            restock_order($conn, $id, current_user_id());
+        }
         if ($order_check && $order_check['status'] === 'pending') {
             $conn->query("UPDATE orders SET status='cancelled' WHERE id=$id");
             flash_message('success', 'Order cancelled.');

@@ -55,12 +55,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $auth_rep_relationship = trim($_POST['auth_rep_relationship'] ?? '');
     $auth_rep_gender = in_array($_POST['auth_rep_gender'] ?? '', ['M', 'F']) ? $_POST['auth_rep_gender'] : null;
 
-    // Freezer info
+    // Freezer info (to be filled by admin)
     $freezer_brand = '';
     $freezer_size = '';
     $freezer_serial = '';
     $freezer_status = '';
-    $freezer_code = trim($_POST['freezer_code'] ?? '');
+
+    // Freezer code for auto-linking to Freezer Partner
+    $freezer_code_input = trim($_POST['freezer_code'] ?? '');
+    $freezer_partner_id = null;
+    if (!empty($freezer_code_input)) {
+        $stmt_fc = $conn->prepare("SELECT id FROM users WHERE role = 'freezer_partner' AND freezer_code = ? AND status = 'active'");
+        $stmt_fc->bind_param("s", $freezer_code_input);
+        $stmt_fc->execute();
+        $fc_result = $stmt_fc->get_result()->fetch_assoc();
+        $stmt_fc->close();
+        if ($fc_result) {
+            $freezer_partner_id = (int)$fc_result['id'];
+        }
+    }
 
     if (empty($last_name) || empty($first_name) || empty($username) || empty($password)) {
         $error = 'Last name, first name, username, and password are required.';
@@ -75,10 +88,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $agent_id = current_user_id();
             $role = 'retailer';
             $status = 'inactive'; // Pending admin approval
-            $stmt2 = $conn->prepare("INSERT INTO users (username, password, full_name, last_name, first_name, middle_name, birthday, gender, sss_gsis, tin, tel_no, role, phone, address, province, town, barangay, purok_subdivision, email, application_type, package_info, auth_rep_name, auth_rep_relationship, auth_rep_gender, freezer_brand, freezer_size, freezer_serial, freezer_status, freezer_code, nao_name, salesman_name, agent_id, registered_by, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt2->bind_param("ssssssssssssssssssssssssssssssssiis", $username, $hashed, $full_name, $last_name, $first_name, $middle_name, $birthday, $gender, $sss_gsis, $tin, $tel_no, $role, $phone, $address, $province, $town, $barangay, $purok_subdivision, $email, $application_type, $package_info, $auth_rep_name, $auth_rep_relationship, $auth_rep_gender, $freezer_brand, $freezer_size, $freezer_serial, $freezer_status, $freezer_code, $nao_name, $salesman_name, $agent_id, $agent_id, $status);
+            $stmt2 = $conn->prepare("INSERT INTO users (username, password, full_name, last_name, first_name, middle_name, birthday, gender, sss_gsis, tin, tel_no, role, phone, address, province, town, barangay, purok_subdivision, email, application_type, package_info, auth_rep_name, auth_rep_relationship, auth_rep_gender, freezer_brand, freezer_size, freezer_serial, freezer_status, nao_name, salesman_name, agent_id, freezer_partner_id, registered_by, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt2->bind_param("ssssssssssssssssssssssssssssssiiis", $username, $hashed, $full_name, $last_name, $first_name, $middle_name, $birthday, $gender, $sss_gsis, $tin, $tel_no, $role, $phone, $address, $province, $town, $barangay, $purok_subdivision, $email, $application_type, $package_info, $auth_rep_name, $auth_rep_relationship, $auth_rep_gender, $freezer_brand, $freezer_size, $freezer_serial, $freezer_status, $nao_name, $salesman_name, $agent_id, $freezer_partner_id, $agent_id, $status);
             $stmt2->execute();
+            $new_retailer_id = $conn->insert_id;
             $stmt2->close();
+
+            // Award registration commission to subdealer
+            if (!empty($package_info)) {
+                $stmt_comm = $conn->prepare("SELECT registration_commission FROM packages WHERE slug = ? AND registration_commission > 0");
+                $stmt_comm->bind_param("s", $package_info);
+                $stmt_comm->execute();
+                $comm_result = $stmt_comm->get_result()->fetch_assoc();
+                $stmt_comm->close();
+                if ($comm_result) {
+                    $comm_amount = (float)$comm_result['registration_commission'];
+                    $stmt_comm = $conn->prepare("INSERT INTO agent_commissions (agent_id, retailer_id, package_slug, amount) VALUES (?, ?, ?, ?)");
+                    $stmt_comm->bind_param("iisd", $agent_id, $new_retailer_id, $package_info, $comm_amount);
+                    $stmt_comm->execute();
+                    $stmt_comm->close();
+                }
+            }
+
             flash_message('success', 'Retailer registered successfully! Pending admin approval before they can login.');
             redirect(BASE_URL . '/agent/retailers.php');
         }
@@ -228,14 +259,13 @@ require_once '../includes/sidebar.php';
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Freezer Code -->
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="input-group input-group-outline <?php echo !empty($_POST['freezer_code'] ?? '') ? 'is-filled' : ''; ?> mb-3">
-                                        <label class="form-label">Freezer Code</label>
+                                        <label class="form-label">Freezer Code (if applicable)</label>
                                         <input type="text" name="freezer_code" class="form-control" value="<?php echo sanitize($_POST['freezer_code'] ?? ''); ?>">
                                     </div>
+                                    <p class="text-xs text-muted mt-n2">If retailer uses a Freezer Partner's freezer, enter their code to auto-link.</p>
                                 </div>
                             </div>
 

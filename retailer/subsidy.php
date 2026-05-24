@@ -28,10 +28,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['convert'])) {
             $stmt->close();
 
             $rate_pct = round($subsidy['rate'] * 100, 1);
-            credit_efunds($conn, $uid, $subsidy['subsidy'], 'subsidy', 'subsidy', null,
+            credit_earnings($conn, $uid, $subsidy['subsidy'], 'subsidy', 'subsidy', null,
                 'Electric subsidy for ' . date('F Y') . ' (' . format_currency($subsidy['total']) . ' x ' . $subsidy['factor'] . ' x ' . $rate_pct . '%)');
 
-            flash_message('success', 'Subsidy of ' . format_currency($subsidy['subsidy']) . ' converted to e-funds!');
+            flash_message('success', 'Subsidy of ' . format_currency($subsidy['subsidy']) . ' added to your earnings!');
         } else {
             flash_message('warning', 'Subsidy already converted for this month.');
         }
@@ -107,13 +107,13 @@ require_once '../includes/sidebar.php';
                             <?php if ($already_converted): ?>
                             <div class="alert alert-success text-white">
                                 <i class="material-icons align-middle">check_circle</i>
-                                Subsidy already converted to e-funds for this month!
+                                Subsidy already claimed to your earnings for this month!
                             </div>
                             <?php else: ?>
                             <form method="POST">
                                 <button type="submit" name="convert" value="1" class="btn bg-gradient-success w-100"
-                                        onclick="return confirm('Convert <?php echo format_currency($subsidy['subsidy']); ?> subsidy to e-funds?')">
-                                    <i class="material-icons">bolt</i> Convert <?php echo format_currency($subsidy['subsidy']); ?> to E-Funds
+                                        onclick="return confirm('Claim <?php echo format_currency($subsidy['subsidy']); ?> subsidy to your earnings?')">
+                                    <i class="material-icons">bolt</i> Claim <?php echo format_currency($subsidy['subsidy']); ?> to Earnings
                                 </button>
                             </form>
                             <?php endif; ?>

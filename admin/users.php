@@ -16,17 +16,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_user'])) {
     $action = $_POST['action_user'];
     if ($action === 'approve') {
         $conn->query("UPDATE users SET status = 'active' WHERE id = $uid");
-        flash_message('success', 'User account approved successfully.');
+
+        // Auto-credit any pending registration commissions for this retailer
+        $stmt = $conn->prepare("SELECT * FROM agent_commissions WHERE retailer_id = ? AND status = 'pending'");
+        $stmt->bind_param("i", $uid);
+        $stmt->execute();
+        $pending = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        foreach ($pending as $c) {
+            $retailer_name = $conn->query("SELECT full_name FROM users WHERE id = $uid")->fetch_assoc()['full_name'];
+            $desc = 'Registration commission for ' . $retailer_name . ' (' . $c['package_slug'] . ')';
+            if (credit_earnings($conn, $c['agent_id'], (float)$c['amount'], 'commission', 'agent_commission', $c['id'], $desc, current_user_id())) {
+                $stmt = $conn->prepare("UPDATE agent_commissions SET status = 'credited', credited_at = NOW() WHERE id = ?");
+                $stmt->bind_param("i", $c['id']);
+                $stmt->execute();
+                $stmt->close();
+            }
+        }
+
+        flash_message('success', 'User approved' . (count($pending) > 0 ? ' and commissions credited to agent.' : '.'));
     } elseif ($action === 'reject') {
         $conn->query("DELETE FROM users WHERE id = $uid AND status = 'inactive'");
         flash_message('success', 'Registration rejected and removed.');
+    } elseif ($action === 'delete') {
+        // Prevent self-delete and prevent deleting admins
+        $target = $conn->query("SELECT role FROM users WHERE id = $uid")->fetch_assoc();
+        if ($uid === current_user_id()) {
+            flash_message('danger', 'You cannot delete your own account.');
+        } elseif (!$target) {
+            flash_message('danger', 'User not found.');
+        } else {
+            // Check for related data
+            $has_orders = (int)$conn->query("SELECT COUNT(*) as c FROM orders WHERE user_id = $uid")->fetch_assoc()['c'];
+            if ($has_orders > 0) {
+                flash_message('danger', "Cannot delete: user has $has_orders order(s). Set status to inactive instead.");
+            } else {
+                $conn->query("DELETE FROM agent_commissions WHERE retailer_id = $uid OR agent_id = $uid");
+                $conn->query("DELETE FROM efunds_transactions WHERE user_id = $uid");
+                $conn->query("DELETE FROM electric_subsidy WHERE user_id = $uid");
+                $conn->query("DELETE FROM freezer_allowance WHERE user_id = $uid");
+                $conn->query("DELETE FROM town_override WHERE user_id = $uid");
+                $conn->query("DELETE FROM reload_requests WHERE user_id = $uid");
+                $conn->query("DELETE FROM withdrawal_requests WHERE user_id = $uid");
+                $conn->query("UPDATE users SET agent_id = NULL WHERE agent_id = $uid");
+                $conn->query("DELETE FROM users WHERE id = $uid");
+                flash_message('success', 'User deleted successfully.');
+            }
+        }
     }
     redirect(BASE_URL . '/admin/users.php' . (isset($_GET['role']) ? '?role=' . $_GET['role'] : ''));
 }
 
 $role_filter = $_GET['role'] ?? 'all';
 $where = "";
-if (in_array($role_filter, ['admin', 'subdealer', 'retailer'])) {
+if (in_array($role_filter, ['admin', 'subdealer', 'retailer', 'freezer_partner'])) {
     $where = "WHERE u.role = '" . $conn->real_escape_string($role_filter) . "'";
 }
 
@@ -69,6 +113,7 @@ require_once '../includes/sidebar.php';
                             <li class="nav-item"><a class="nav-link <?php echo $role_filter === 'admin' ? 'active' : ''; ?>" href="?role=admin">Admins</a></li>
                             <li class="nav-item"><a class="nav-link <?php echo $role_filter === 'subdealer' ? 'active' : ''; ?>" href="?role=subdealer">Subdealers</a></li>
                             <li class="nav-item"><a class="nav-link <?php echo $role_filter === 'retailer' ? 'active' : ''; ?>" href="?role=retailer">Retailers</a></li>
+                            <li class="nav-item"><a class="nav-link <?php echo $role_filter === 'freezer_partner' ? 'active' : ''; ?>" href="?role=freezer_partner">Freezer Partners</a></li>
                         </ul>
                     </div>
                     <div class="card-body px-0 pt-0 pb-2">
@@ -81,7 +126,6 @@ require_once '../includes/sidebar.php';
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Phone</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Address</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Package</th>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Freezer Code</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Agent</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">E-Funds</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
@@ -103,7 +147,6 @@ require_once '../includes/sidebar.php';
                                         <td><span class="text-xs"><?php echo sanitize($u['phone'] ?? '-'); ?></span></td>
                                         <td><span class="text-xs"><?php echo sanitize($u['address'] ?? '-'); ?></span></td>
                                         <td><span class="text-xs"><?php echo sanitize($u['package_name'] ?? '-'); ?></span></td>
-                                        <td><span class="text-xs font-weight-bold"><?php echo sanitize($u['freezer_code'] ?? '-'); ?></span></td>
                                         <td><span class="text-xs"><?php echo sanitize($u['agent_name'] ?? '-'); ?></span></td>
                                         <td><span class="text-xs font-weight-bold"><?php echo format_currency($u['efunds_balance']); ?></span></td>
                                         <td><span class="badge bg-gradient-<?php echo $u['status'] === 'active' ? 'success' : 'secondary'; ?>"><?php echo ucfirst($u['status']); ?></span></td>
@@ -115,7 +158,14 @@ require_once '../includes/sidebar.php';
                                                 <button type="submit" name="action_user" value="reject" class="btn btn-sm bg-gradient-danger mb-0" onclick="return confirm('Reject this registration?')">Reject</button>
                                             </form>
                                             <?php endif; ?>
+                                            <a href="<?php echo BASE_URL; ?>/admin/user_view.php?id=<?php echo $u['id']; ?>" class="btn btn-sm bg-gradient-info mb-0">View</a>
                                             <a href="<?php echo BASE_URL; ?>/admin/user_edit.php?id=<?php echo $u['id']; ?>" class="btn btn-sm bg-gradient-dark mb-0">Edit</a>
+                                            <?php if ($u['id'] !== current_user_id()): ?>
+                                            <form method="POST" style="display:inline;" onsubmit="return confirm('Delete user &quot;<?php echo sanitize($u['full_name']); ?>&quot;? This cannot be undone.');">
+                                                <input type="hidden" name="user_id" value="<?php echo $u['id']; ?>">
+                                                <button type="submit" name="action_user" value="delete" class="btn btn-sm bg-gradient-danger mb-0">Delete</button>
+                                            </form>
+                                            <?php endif; ?>
                                         </td>
                                     </tr>
                                     <?php endwhile; ?>

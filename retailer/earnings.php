@@ -32,16 +32,12 @@ $override_converted = $conn->query("SELECT id FROM town_override WHERE user_id =
 $subsidy = calculate_subsidy($conn, $uid, $filter_month, $filter_year);
 $subsidy_converted = $conn->query("SELECT id FROM electric_subsidy WHERE user_id = $uid AND month = $filter_month AND year = $filter_year AND converted = 1")->num_rows > 0;
 
-// === 3. Freezer Partner (ICH only - 3% from partner retailers) ===
-$freezer_partner = calculate_freezer_partner($conn, $uid, $filter_month, $filter_year);
-$freezer_partner_converted = $conn->query("SELECT id FROM freezer_partner WHERE user_id = $uid AND month = $filter_month AND year = $filter_year AND converted = 1")->num_rows > 0;
-
-// === 4. FDA ===
+// === 3. FDA ===
 $fda = calculate_fda($conn, $uid, $filter_month, $filter_year);
 $fda_converted = $conn->query("SELECT id FROM freezer_allowance WHERE user_id = $uid AND month = $filter_month AND year = $filter_year AND converted = 1")->num_rows > 0;
 
 // === 4. Total converted e-funds this month (from efunds_transactions) ===
-$stmt = $conn->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM efunds_transactions WHERE user_id = ? AND type = 'subsidy' AND MONTH(created_at) = ? AND YEAR(created_at) = ?");
+$stmt = $conn->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM earnings_transactions WHERE user_id = ? AND amount > 0 AND MONTH(created_at) = ? AND YEAR(created_at) = ?");
 $stmt->bind_param("iii", $uid, $filter_month, $filter_year);
 $stmt->execute();
 $total_converted = (float)$stmt->get_result()->fetch_assoc()['total'];
@@ -67,9 +63,7 @@ if ($is_ice_cream_house && !empty($user['town'])) {
     $stmt->execute();
     $result = $stmt->get_result();
     while ($row = $result->fetch_assoc()) {
-        $factor = $override['factor'] ?? 0.63;
-        $row['override_amount'] = round($row['total_amount'] * $factor * 0.02, 2);
-        $row['rebate_amount'] = round($row['total_amount'] * $factor * 0.035, 2);
+        $row['override_amount'] = round($row['total_amount'] * 0.02, 2);
         $town_transactions[] = $row;
     }
     $stmt->close();
@@ -79,9 +73,7 @@ if ($is_ice_cream_house && !empty($user['town'])) {
 $subsidy_amount = $subsidy['eligible'] ? $subsidy['subsidy'] : 0;
 $fda_amount = $fda['eligible'] ? $fda['allowance'] : 0;
 $override_amount = $override['eligible'] ? $override['override_amount'] : 0;
-$rebate_amount = $override['eligible'] ? ($override['rebate_amount'] ?? 0) : 0;
-$freezer_partner_amount = $freezer_partner['eligible'] ? $freezer_partner['partner_amount'] : 0;
-$grand_total_earnings = $subsidy_amount + $fda_amount + $override_amount + $rebate_amount + $freezer_partner_amount;
+$grand_total_earnings = $subsidy_amount + $fda_amount + $override_amount;
 
 // Navigation months
 $prev_month = $filter_month - 1;
@@ -101,6 +93,20 @@ require_once '../includes/sidebar.php';
 
     <div class="container-fluid py-4">
         <?php show_flash(); ?>
+
+        <!-- Earnings Balance -->
+        <div class="row mb-4">
+            <div class="col-md-6 mx-auto">
+                <div class="card bg-gradient-success">
+                    <div class="card-body text-center text-white p-4">
+                        <i class="material-icons" style="font-size:48px;">savings</i>
+                        <p class="text-sm mb-1 opacity-8">Earnings Balance</p>
+                        <h2 class="mb-0 text-white"><?php echo format_currency($user['earnings_balance']); ?></h2>
+                        <p class="text-xs opacity-8 mb-0 mt-2">Separate from your E-Funds purchase wallet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Month Navigation -->
         <div class="row mb-4">
@@ -154,34 +160,6 @@ require_once '../includes/sidebar.php';
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-header p-3 pt-2">
-                        <div class="icon icon-lg icon-shape bg-gradient-dark shadow-dark text-center border-radius-xl mt-n4 position-absolute">
-                            <i class="material-icons opacity-10">redeem</i>
-                        </div>
-                        <div class="text-end pt-1">
-                            <p class="text-sm mb-0">Re-order Rebate (3.5%)</p>
-                            <h4 class="mb-0"><?php echo format_currency($rebate_amount); ?></h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <?php if ($freezer_partner_amount > 0 || !empty($freezer_partner['freezer_code'])): ?>
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-header p-3 pt-2">
-                        <div class="icon icon-lg icon-shape bg-gradient-secondary shadow text-center border-radius-xl mt-n4 position-absolute">
-                            <i class="material-icons opacity-10">handshake</i>
-                        </div>
-                        <div class="text-end pt-1">
-                            <p class="text-sm mb-0">Freezer Partner (3%)</p>
-                            <h4 class="mb-0"><?php echo format_currency($freezer_partner_amount); ?></h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <?php endif; ?>
             <?php endif; ?>
             <div class="col-lg-3 col-md-6 mb-4">
                 <div class="card">
@@ -261,68 +239,6 @@ require_once '../includes/sidebar.php';
                                             <a href="<?php echo BASE_URL; ?>/retailer/town_override.php" class="btn btn-sm bg-gradient-dark mb-0">View</a>
                                         </td>
                                     </tr>
-
-                                    <!-- ICH Re-order Rebate -->
-                                    <tr>
-                                        <td class="ps-4">
-                                            <div class="d-flex align-items-center">
-                                                <i class="material-icons text-dark me-2">redeem</i>
-                                                <div>
-                                                    <h6 class="mb-0 text-sm">Re-order Rebate</h6>
-                                                    <p class="text-xs text-secondary mb-0">3.5% from Starter & Premium in <?php echo sanitize($user['town'] ?? 'N/A'); ?></p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="text-xs">Town orders: <?php echo format_currency($override['total_orders']); ?></span><br>
-                                            <span class="text-xs text-secondary"><?php echo count($override['breakdown']); ?> retailer(s)</span>
-                                        </td>
-                                        <td><span class="text-sm font-weight-bold <?php echo $rebate_amount > 0 ? 'text-success' : 'text-muted'; ?>"><?php echo format_currency($rebate_amount); ?></span></td>
-                                        <td>
-                                            <?php if ($override_converted): ?>
-                                                <span class="badge bg-gradient-success">Converted</span>
-                                            <?php elseif ($rebate_amount > 0): ?>
-                                                <span class="badge bg-gradient-warning">Available</span>
-                                            <?php else: ?>
-                                                <span class="badge bg-gradient-secondary">No earnings</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <a href="<?php echo BASE_URL; ?>/retailer/town_override.php" class="btn btn-sm bg-gradient-dark mb-0">View</a>
-                                        </td>
-                                    </tr>
-                                    <?php endif; ?>
-
-                                    <?php if ($is_ice_cream_house && !empty($freezer_partner['freezer_code'])): ?>
-                                    <!-- Freezer Partner -->
-                                    <tr>
-                                        <td class="ps-4">
-                                            <div class="d-flex align-items-center">
-                                                <i class="material-icons text-secondary me-2">handshake</i>
-                                                <div>
-                                                    <h6 class="mb-0 text-sm">Freezer Partner</h6>
-                                                    <p class="text-xs text-secondary mb-0">3% from partners (code: <?php echo sanitize($freezer_partner['freezer_code']); ?>)</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="text-xs">Partner orders: <?php echo format_currency($freezer_partner['total_orders']); ?></span><br>
-                                            <span class="text-xs text-secondary"><?php echo $freezer_partner['partner_count']; ?> partner(s)</span>
-                                        </td>
-                                        <td><span class="text-sm font-weight-bold <?php echo $freezer_partner_amount > 0 ? 'text-success' : 'text-muted'; ?>"><?php echo format_currency($freezer_partner_amount); ?></span></td>
-                                        <td>
-                                            <?php if ($freezer_partner_converted): ?>
-                                                <span class="badge bg-gradient-success">Converted</span>
-                                            <?php elseif ($freezer_partner_amount > 0): ?>
-                                                <span class="badge bg-gradient-warning">Available</span>
-                                            <?php else: ?>
-                                                <span class="badge bg-gradient-secondary">No earnings</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <a href="<?php echo BASE_URL; ?>/retailer/freezer_partner.php" class="btn btn-sm bg-gradient-dark mb-0">View</a>
-                                        </td>
-                                    </tr>
                                     <?php endif; ?>
 
                                     <!-- Electric Subsidy -->
@@ -390,7 +306,7 @@ require_once '../includes/sidebar.php';
                                         <td><span class="text-sm font-weight-bold text-success"><?php echo format_currency($grand_total_earnings); ?></span></td>
                                         <td colspan="2">
                                             <?php if ($total_converted > 0): ?>
-                                            <span class="text-xs"><?php echo format_currency($total_converted); ?> converted to e-funds</span>
+                                            <span class="text-xs"><?php echo format_currency($total_converted); ?> added to earnings</span>
                                             <?php endif; ?>
                                         </td>
                                     </tr>
@@ -425,18 +341,15 @@ require_once '../includes/sidebar.php';
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Package</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Order Amount</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Your 2%</th>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Your 3.5%</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php
                                     $txn_total = 0;
                                     $txn_override = 0;
-                                    $txn_rebate = 0;
                                     foreach ($town_transactions as $txn):
                                         $txn_total += $txn['total_amount'];
                                         $txn_override += $txn['override_amount'];
-                                        $txn_rebate += $txn['rebate_amount'];
                                     ?>
                                     <tr>
                                         <td class="ps-4"><span class="text-xs"><?php echo date('M d, Y', strtotime($txn['delivered_at'])); ?></span></td>
@@ -445,14 +358,12 @@ require_once '../includes/sidebar.php';
                                         <td><span class="text-xs"><?php echo sanitize($txn['package_name']); ?></span></td>
                                         <td><span class="text-xs"><?php echo format_currency($txn['total_amount']); ?></span></td>
                                         <td><span class="text-xs font-weight-bold text-success"><?php echo format_currency($txn['override_amount']); ?></span></td>
-                                        <td><span class="text-xs font-weight-bold text-success"><?php echo format_currency($txn['rebate_amount']); ?></span></td>
                                     </tr>
                                     <?php endforeach; ?>
                                     <tr class="bg-light">
                                         <td class="ps-4" colspan="4"><span class="text-sm font-weight-bold">TOTAL (<?php echo count($town_transactions); ?> transactions)</span></td>
                                         <td><span class="text-sm font-weight-bold"><?php echo format_currency($txn_total); ?></span></td>
                                         <td><span class="text-sm font-weight-bold text-success"><?php echo format_currency($txn_override); ?></span></td>
-                                        <td><span class="text-sm font-weight-bold text-success"><?php echo format_currency($txn_rebate); ?></span></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -468,7 +379,7 @@ require_once '../includes/sidebar.php';
             <div class="col-12">
                 <div class="card">
                     <div class="card-header pb-0">
-                        <h6>E-Funds Conversions — <?php echo $period_label; ?></h6>
+                        <h6>Earnings Added — <?php echo $period_label; ?></h6>
                     </div>
                     <div class="card-body px-0 pt-0 pb-2">
                         <div class="table-responsive p-0">
@@ -483,7 +394,7 @@ require_once '../includes/sidebar.php';
                                 </thead>
                                 <tbody>
                                     <?php
-                                    $stmt = $conn->prepare("SELECT * FROM efunds_transactions WHERE user_id = ? AND type = 'subsidy' AND MONTH(created_at) = ? AND YEAR(created_at) = ? ORDER BY created_at DESC");
+                                    $stmt = $conn->prepare("SELECT * FROM earnings_transactions WHERE user_id = ? AND amount > 0 AND MONTH(created_at) = ? AND YEAR(created_at) = ? ORDER BY created_at DESC");
                                     $stmt->bind_param("iii", $uid, $filter_month, $filter_year);
                                     $stmt->execute();
                                     $conversions = $stmt->get_result();

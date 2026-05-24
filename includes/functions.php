@@ -94,7 +94,7 @@ function calculate_subsidy($conn, $user_id, $month, $year) {
     $pkg = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
-    $factor = (float)get_setting($conn, 'subsidy_factor') ?: 0.63;
+    $factor = (float)get_setting($conn, 'subsidy_factor') ?: 0.88;
 
     if (!$pkg || $pkg['subsidy_rate'] <= 0) {
         // User has no package or package has no subsidy
@@ -185,7 +185,7 @@ function credit_efunds($conn, $user_id, $amount, $type, $ref_type, $ref_id, $des
         $stmt->close();
 
         $stmt = $conn->prepare("INSERT INTO efunds_transactions (user_id, type, amount, balance_after, reference_type, reference_id, description, processed_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("isddisis", $user_id, $type, $amount, $new_balance, $ref_type, $ref_id, $description, $processed_by);
+        $stmt->bind_param("isddsisi", $user_id, $type, $amount, $new_balance, $ref_type, $ref_id, $description, $processed_by);
         $stmt->execute();
         $stmt->close();
 
@@ -211,7 +211,6 @@ function calculate_agent_subsidy($conn, $agent_id, $month, $year) {
     $retailers = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
 
-    $factor = (float)get_setting($conn, 'subsidy_factor') ?: 0.63;
     $grand_total = 0;
     $total_subsidy = 0;
     $breakdown = [];
@@ -229,7 +228,7 @@ function calculate_agent_subsidy($conn, $agent_id, $month, $year) {
         $stmt->close();
 
         $rate = (float)($r['subsidy_rate'] ?? 0);
-        $retailer_subsidy = round($retailer_total * $factor * $rate, 2);
+        $retailer_subsidy = round($retailer_total * $rate, 2);
         $grand_total += $retailer_total;
         $total_subsidy += $retailer_subsidy;
 
@@ -272,13 +271,11 @@ function calculate_town_override($conn, $user_id, $month, $year) {
     $stmt->close();
 
     if (!$user || $user['package_slug'] !== 'ice_cream_house' || empty($user['town'])) {
-        return ['eligible' => false, 'is_ice_cream_house' => ($user['package_slug'] ?? '') === 'ice_cream_house', 'town' => $user['town'] ?? '', 'total_orders' => 0, 'override_amount' => 0, 'rate' => 0.02, 'factor' => 0.63, 'rebate_rate' => 0.035, 'rebate_amount' => 0, 'breakdown' => []];
+        return ['eligible' => false, 'is_ice_cream_house' => ($user['package_slug'] ?? '') === 'ice_cream_house', 'town' => $user['town'] ?? '', 'total_orders' => 0, 'override_amount' => 0, 'rate' => 0.02, 'breakdown' => []];
     }
 
     $town = $user['town'];
-    $factor = (float)get_setting($conn, 'subsidy_factor') ?: 0.63;
     $rate = 0.02; // 2%
-    $rebate_rate = 0.035; // 3.5%
 
     // Get Starter Pack & Premium Pack retailers in the same town (excluding self)
     $stmt = $conn->prepare("
@@ -310,8 +307,7 @@ function calculate_town_override($conn, $user_id, $month, $year) {
         $retailer_total = (float)$stmt->get_result()->fetch_assoc()['total'];
         $stmt->close();
 
-        $override = round($retailer_total * $factor * $rate, 2);
-        $rebate = round($retailer_total * $factor * $rebate_rate, 2);
+        $override = round($retailer_total * $rate, 2);
         $total_orders += $retailer_total;
 
         $breakdown[] = [
@@ -320,12 +316,10 @@ function calculate_town_override($conn, $user_id, $month, $year) {
             'package' => $r['package_name'],
             'orders_total' => $retailer_total,
             'override' => $override,
-            'rebate' => $rebate,
         ];
     }
 
-    $override_amount = round($total_orders * $factor * $rate, 2);
-    $rebate_amount = round($total_orders * $factor * $rebate_rate, 2);
+    $override_amount = round($total_orders * $rate, 2);
 
     return [
         'eligible' => $override_amount > 0,
@@ -334,90 +328,60 @@ function calculate_town_override($conn, $user_id, $month, $year) {
         'total_orders' => $total_orders,
         'override_amount' => $override_amount,
         'rate' => $rate,
-        'factor' => $factor,
-        'rebate_rate' => $rebate_rate,
-        'rebate_amount' => $rebate_amount,
-        'breakdown' => $breakdown,
-    ];
-}
-
-function calculate_freezer_partner($conn, $user_id, $month, $year) {
-    // Ice Cream House retailers earn 3% from retailers with matching freezer code
-    $stmt = $conn->prepare("
-        SELECT u.freezer_code, u.package_info, p.slug as package_slug
-        FROM users u
-        JOIN packages p ON u.package_info = p.slug
-        WHERE u.id = ? AND u.role = 'retailer'
-    ");
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $user = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-
-    if (!$user || $user['package_slug'] !== 'ice_cream_house' || empty($user['freezer_code'])) {
-        return ['eligible' => false, 'is_ice_cream_house' => ($user['package_slug'] ?? '') === 'ice_cream_house', 'freezer_code' => $user['freezer_code'] ?? '', 'total_orders' => 0, 'partner_amount' => 0, 'rate' => 0.03, 'breakdown' => []];
-    }
-
-    $freezer_code = $user['freezer_code'];
-    $rate = 0.03; // 3%
-
-    // Get all retailers with the same freezer code (excluding self)
-    $stmt = $conn->prepare("
-        SELECT u.id, u.full_name, p.name as package_name
-        FROM users u
-        LEFT JOIN packages p ON u.package_info = p.slug
-        WHERE u.role = 'retailer' AND u.status = 'active'
-          AND u.freezer_code = ? AND u.id != ?
-        ORDER BY u.full_name
-    ");
-    $stmt->bind_param("si", $freezer_code, $user_id);
-    $stmt->execute();
-    $retailers = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    $stmt->close();
-
-    $total_orders = 0;
-    $breakdown = [];
-
-    foreach ($retailers as $r) {
-        $stmt = $conn->prepare("
-            SELECT COALESCE(SUM(total_amount), 0) as total
-            FROM orders
-            WHERE user_id = ? AND status = 'delivered'
-              AND MONTH(delivered_at) = ? AND YEAR(delivered_at) = ?
-        ");
-        $stmt->bind_param("iii", $r['id'], $month, $year);
-        $stmt->execute();
-        $retailer_total = (float)$stmt->get_result()->fetch_assoc()['total'];
-        $stmt->close();
-
-        $partner_earning = round($retailer_total * $rate, 2);
-        $total_orders += $retailer_total;
-
-        $breakdown[] = [
-            'id' => $r['id'],
-            'name' => $r['full_name'],
-            'package' => $r['package_name'] ?? 'No Package',
-            'orders_total' => $retailer_total,
-            'earning' => $partner_earning,
-        ];
-    }
-
-    $partner_amount = round($total_orders * $rate, 2);
-
-    return [
-        'eligible' => $partner_amount > 0,
-        'is_ice_cream_house' => true,
-        'freezer_code' => $freezer_code,
-        'total_orders' => $total_orders,
-        'partner_amount' => $partner_amount,
-        'rate' => $rate,
-        'partner_count' => count($retailers),
         'breakdown' => $breakdown,
     ];
 }
 
 function debit_efunds($conn, $user_id, $amount, $ref_type, $ref_id, $description, $processed_by = null) {
     return credit_efunds($conn, $user_id, -$amount, 'payment', $ref_type, $ref_id, $description, $processed_by);
+}
+
+// ---------------------------------------------------------------------------
+// Earnings wallet (incentives: subsidy, freezer allowance, town/agent
+// over-ride, registration commission). Kept SEPARATE from e-funds, which is
+// the purchase/reload wallet used to buy ice cream.
+// ---------------------------------------------------------------------------
+
+function credit_earnings($conn, $user_id, $amount, $type, $ref_type, $ref_id, $description, $processed_by = null) {
+    $conn->begin_transaction();
+    try {
+        $stmt = $conn->prepare("SELECT earnings_balance FROM users WHERE id = ? FOR UPDATE");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $balance = (float)$stmt->get_result()->fetch_assoc()['earnings_balance'];
+        $stmt->close();
+
+        $new_balance = $balance + $amount;
+        $stmt = $conn->prepare("UPDATE users SET earnings_balance = ? WHERE id = ?");
+        $stmt->bind_param("di", $new_balance, $user_id);
+        $stmt->execute();
+        $stmt->close();
+
+        $stmt = $conn->prepare("INSERT INTO earnings_transactions (user_id, type, amount, balance_after, reference_type, reference_id, description, processed_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("isddsisi", $user_id, $type, $amount, $new_balance, $ref_type, $ref_id, $description, $processed_by);
+        $stmt->execute();
+        $stmt->close();
+
+        $conn->commit();
+        return true;
+    } catch (Exception $e) {
+        $conn->rollback();
+        return false;
+    }
+}
+
+function debit_earnings($conn, $user_id, $amount, $ref_type, $ref_id, $description, $processed_by = null) {
+    return credit_earnings($conn, $user_id, -$amount, 'withdrawal', $ref_type, $ref_id, $description, $processed_by);
+}
+
+// Current earnings balance for a user.
+function get_earnings_balance($conn, $user_id) {
+    $stmt = $conn->prepare("SELECT earnings_balance FROM users WHERE id = ?");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return $row ? (float)$row['earnings_balance'] : 0.0;
 }
 
 function get_delivery_window($order_time = null) {
@@ -494,4 +458,114 @@ function time_ago($datetime) {
     if ($diff->h > 0) return $diff->h . ' hour' . ($diff->h > 1 ? 's' : '') . ' ago';
     if ($diff->i > 0) return $diff->i . ' min ago';
     return 'Just now';
+}
+
+// ---------------------------------------------------------------------------
+// Inventory (per-flavor stock, counted in packs)
+// ---------------------------------------------------------------------------
+
+// Current stock (packs) for a flavor. Returns 0 if the flavor no longer exists.
+function get_flavor_stock($conn, $flavor_id) {
+    $stmt = $conn->prepare("SELECT stock_packs FROM product_flavors WHERE id = ?");
+    $stmt->bind_param("i", $flavor_id);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return $row ? (int)$row['stock_packs'] : 0;
+}
+
+// Apply a relative change (packs) to a flavor's stock and log it.
+// $change_packs may be negative (deduction). Deductions that would drop below
+// zero are rejected unless $allow_negative is true. Returns the new balance on
+// success, or false on failure (missing flavor / would oversell).
+function adjust_stock($conn, $flavor_id, $change_packs, $type, $ref_type, $ref_id, $notes = null, $user_id = null, $allow_negative = false) {
+    $change_packs = (int)$change_packs;
+    $conn->begin_transaction();
+    try {
+        $stmt = $conn->prepare("SELECT stock_packs FROM product_flavors WHERE id = ? FOR UPDATE");
+        $stmt->bind_param("i", $flavor_id);
+        $stmt->execute();
+        $res = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        if (!$res) { $conn->rollback(); return false; }
+
+        $current = (int)$res['stock_packs'];
+        $new = $current + $change_packs;
+        if ($new < 0 && !$allow_negative) { $conn->rollback(); return false; }
+        if ($new < 0) $new = 0;
+        $applied = $new - $current;
+
+        $stmt = $conn->prepare("UPDATE product_flavors SET stock_packs = ? WHERE id = ?");
+        $stmt->bind_param("ii", $new, $flavor_id);
+        $stmt->execute();
+        $stmt->close();
+
+        $stmt = $conn->prepare("INSERT INTO inventory_transactions (product_flavor_id, change_packs, balance_after, type, reference_type, reference_id, notes, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("iiississ", $flavor_id, $applied, $new, $type, $ref_type, $ref_id, $notes, $user_id);
+        $stmt->execute();
+        $stmt->close();
+
+        $conn->commit();
+        return $new;
+    } catch (Exception $e) {
+        $conn->rollback();
+        return false;
+    }
+}
+
+// Set a flavor's stock to an absolute value (admin correction / restock) and log
+// the difference. Returns true on success.
+function set_stock($conn, $flavor_id, $new_value, $notes = null, $user_id = null) {
+    $new_value = max(0, (int)$new_value);
+    $conn->begin_transaction();
+    try {
+        $stmt = $conn->prepare("SELECT stock_packs FROM product_flavors WHERE id = ? FOR UPDATE");
+        $stmt->bind_param("i", $flavor_id);
+        $stmt->execute();
+        $res = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        if (!$res) { $conn->rollback(); return false; }
+
+        $current = (int)$res['stock_packs'];
+        $change = $new_value - $current;
+        if ($change === 0) { $conn->commit(); return true; }
+
+        $stmt = $conn->prepare("UPDATE product_flavors SET stock_packs = ? WHERE id = ?");
+        $stmt->bind_param("ii", $new_value, $flavor_id);
+        $stmt->execute();
+        $stmt->close();
+
+        $type = $change > 0 ? 'restock' : 'adjustment';
+        $stmt = $conn->prepare("INSERT INTO inventory_transactions (product_flavor_id, change_packs, balance_after, type, reference_type, reference_id, notes, created_by) VALUES (?, ?, ?, ?, 'manual', NULL, ?, ?)");
+        $stmt->bind_param("iiissi", $flavor_id, $change, $new_value, $type, $notes, $user_id);
+        $stmt->execute();
+        $stmt->close();
+
+        $conn->commit();
+        return true;
+    } catch (Exception $e) {
+        $conn->rollback();
+        return false;
+    }
+}
+
+// Return every line of a cancelled order back to stock.
+function restock_order($conn, $order_id, $user_id = null) {
+    $order_id = (int)$order_id;
+    $items = $conn->query("SELECT product_flavor_id, quantity_packs, product_name, flavor_name FROM order_items WHERE order_id = $order_id");
+    if (!$items) return;
+    while ($it = $items->fetch_assoc()) {
+        if ((int)$it['quantity_packs'] <= 0) continue;
+        adjust_stock(
+            $conn,
+            (int)$it['product_flavor_id'],
+            (int)$it['quantity_packs'],
+            'cancel_return',
+            'order',
+            $order_id,
+            'Returned from cancelled order',
+            $user_id,
+            true
+        );
+    }
 }

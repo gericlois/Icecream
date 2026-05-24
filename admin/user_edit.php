@@ -71,6 +71,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $status = $_POST['status'] ?? 'active';
     $new_password = $_POST['new_password'] ?? '';
     $agent_id = !empty($_POST['agent_id']) ? (int)$_POST['agent_id'] : null;
+    $freezer_partner_id = !empty($_POST['freezer_partner_id']) ? (int)$_POST['freezer_partner_id'] : null;
+    $freezer_code_input = trim($_POST['freezer_code'] ?? '');
+    $freezer_code_partner = trim($_POST['freezer_code_partner'] ?? '');
+    $freezer_code = null;
+
+    if ($role === 'freezer_partner') {
+        $freezer_code = $freezer_code_partner ?: null;
+    } elseif ($role === 'retailer' && !empty($freezer_code_input)) {
+        $stmt_fc = $conn->prepare("SELECT id FROM users WHERE role = 'freezer_partner' AND freezer_code = ? AND status = 'active'");
+        $stmt_fc->bind_param("s", $freezer_code_input);
+        $stmt_fc->execute();
+        $fc_result = $stmt_fc->get_result()->fetch_assoc();
+        $stmt_fc->close();
+        if ($fc_result) {
+            $freezer_partner_id = (int)$fc_result['id'];
+        }
+    }
 
     // Application info
     $application_type = in_array($_POST['application_type'] ?? '', ['cod', '7days_term']) ? $_POST['application_type'] : null;
@@ -98,14 +115,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $freezer_size = trim($_POST['freezer_size'] ?? '');
     $freezer_serial = trim($_POST['freezer_serial'] ?? '');
     $freezer_status = trim($_POST['freezer_status'] ?? '');
-    $freezer_code = trim($_POST['freezer_code'] ?? '');
 
     if (empty($last_name) || empty($first_name)) {
         $error = 'Last name and first name are required.';
     } else {
-        $sql = "UPDATE users SET full_name=?, last_name=?, first_name=?, middle_name=?, birthday=?, gender=?, sss_gsis=?, tin=?, address=?, province=?, town=?, barangay=?, purok_subdivision=?, tel_no=?, phone=?, email=?, role=?, status=?, agent_id=?, application_type=?, package_info=?, nao_name=?, salesman_name=?, auth_rep_name=?, auth_rep_relationship=?, auth_rep_gender=?, freezer_brand=?, freezer_size=?, freezer_serial=?, freezer_status=?, freezer_code=?";
-        $types = "sssssssssssssssssssssssssssssss";
-        $params = [$full_name, $last_name, $first_name, $middle_name, $birthday, $gender, $sss_gsis, $tin, $address, $province, $town, $barangay, $purok_subdivision, $tel_no, $phone, $email, $role, $status, $agent_id, $application_type, $package_info, $nao_name, $salesman_name, $auth_rep_name, $auth_rep_relationship, $auth_rep_gender, $freezer_brand, $freezer_size, $freezer_serial, $freezer_status, $freezer_code];
+        $sql = "UPDATE users SET full_name=?, last_name=?, first_name=?, middle_name=?, birthday=?, gender=?, sss_gsis=?, tin=?, address=?, province=?, town=?, barangay=?, purok_subdivision=?, tel_no=?, phone=?, email=?, role=?, status=?, agent_id=?, freezer_partner_id=?, freezer_code=?, application_type=?, package_info=?, nao_name=?, salesman_name=?, auth_rep_name=?, auth_rep_relationship=?, auth_rep_gender=?, freezer_brand=?, freezer_size=?, freezer_serial=?, freezer_status=?";
+        $types = "ssssssssssssssssssssssssssssssss";
+        $params = [$full_name, $last_name, $first_name, $middle_name, $birthday, $gender, $sss_gsis, $tin, $address, $province, $town, $barangay, $purok_subdivision, $tel_no, $phone, $email, $role, $status, $agent_id, $freezer_partner_id, $freezer_code, $application_type, $package_info, $nao_name, $salesman_name, $auth_rep_name, $auth_rep_relationship, $auth_rep_gender, $freezer_brand, $freezer_size, $freezer_serial, $freezer_status];
 
         if (!empty($new_password)) {
             $hashed = password_hash($new_password, PASSWORD_DEFAULT);
@@ -129,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Merge POST values back into $user on validation error so form re-populates
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($error)) {
-    $post_fields = ['last_name','first_name','middle_name','birthday','gender','sss_gsis','tin','address','province','town','barangay','purok_subdivision','tel_no','phone','email','application_type','package_info','nao_name','salesman_name','auth_rep_name','auth_rep_relationship','auth_rep_gender','freezer_brand','freezer_size','freezer_serial','freezer_status','freezer_code'];
+    $post_fields = ['last_name','first_name','middle_name','birthday','gender','sss_gsis','tin','address','province','town','barangay','purok_subdivision','tel_no','phone','email','application_type','package_info','nao_name','salesman_name','auth_rep_name','auth_rep_relationship','auth_rep_gender','freezer_brand','freezer_size','freezer_serial','freezer_status'];
     foreach ($post_fields as $f) {
         $user[$f] = $_POST[$f] ?? $user[$f];
     }
@@ -138,6 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($error)) {
 }
 
 $agents = $conn->query("SELECT id, full_name FROM users WHERE role = 'subdealer' AND status = 'active' ORDER BY full_name");
+$freezer_partners = $conn->query("SELECT id, full_name FROM users WHERE role = 'freezer_partner' AND status = 'active' ORDER BY full_name");
 $packages_result = $conn->query("SELECT slug, name FROM packages WHERE status = 'active' ORDER BY sort_order");
 
 require_once '../includes/header.php';
@@ -182,6 +199,7 @@ require_once '../includes/sidebar.php';
                                         <select name="role" class="form-control">
                                             <option value="retailer" <?php echo $user['role'] === 'retailer' ? 'selected' : ''; ?>>Retailer</option>
                                             <option value="subdealer" <?php echo $user['role'] === 'subdealer' ? 'selected' : ''; ?>>Subdealer</option>
+                                            <option value="freezer_partner" <?php echo $user['role'] === 'freezer_partner' ? 'selected' : ''; ?>>Freezer Partner</option>
                                             <option value="admin" <?php echo $user['role'] === 'admin' ? 'selected' : ''; ?>>Admin</option>
                                         </select>
                                     </div>
@@ -339,15 +357,51 @@ require_once '../includes/sidebar.php';
                                     </div>
                                 </div>
                             </div>
-                            <div class="input-group input-group-static mb-3">
-                                <label class="ms-0">Assign to Agent/Subdealer</label>
-                                <select name="agent_id" class="form-control">
-                                    <option value="">-- None --</option>
-                                    <?php while ($a = $agents->fetch_assoc()): ?>
-                                    <option value="<?php echo $a['id']; ?>" <?php echo $user['agent_id'] == $a['id'] ? 'selected' : ''; ?>><?php echo sanitize($a['full_name']); ?></option>
-                                    <?php endwhile; ?>
-                                </select>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="input-group input-group-static mb-3">
+                                        <label class="ms-0">Assign to Agent/Subdealer</label>
+                                        <select name="agent_id" class="form-control">
+                                            <option value="">-- None --</option>
+                                            <?php while ($a = $agents->fetch_assoc()): ?>
+                                            <option value="<?php echo $a['id']; ?>" <?php echo $user['agent_id'] == $a['id'] ? 'selected' : ''; ?>><?php echo sanitize($a['full_name']); ?></option>
+                                            <?php endwhile; ?>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="input-group input-group-static mb-3">
+                                        <label class="ms-0">Assign to Freezer Partner</label>
+                                        <select name="freezer_partner_id" class="form-control">
+                                            <option value="">-- None --</option>
+                                            <?php while ($fp = $freezer_partners->fetch_assoc()): ?>
+                                            <option value="<?php echo $fp['id']; ?>" <?php echo ($user['freezer_partner_id'] ?? '') == $fp['id'] ? 'selected' : ''; ?>><?php echo sanitize($fp['full_name']); ?></option>
+                                            <?php endwhile; ?>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="input-group input-group-outline <?php echo $user['role'] === 'retailer' ? 'is-filled' : ''; ?> my-3">
+                                        <label class="form-label">Freezer Code (auto-link)</label>
+                                        <input type="text" name="freezer_code" class="form-control" value="">
+                                    </div>
+                                    <p class="text-xs text-muted mt-n2">Enter code to auto-link to a Freezer Partner</p>
+                                </div>
                             </div>
+
+                            <?php if ($user['role'] === 'freezer_partner'): ?>
+                            <h6 class="text-uppercase text-secondary text-xs font-weight-bolder mt-4 mb-2">Freezer Partner Setup</h6>
+                            <hr class="horizontal dark mt-0 mb-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="input-group input-group-outline <?php echo !empty($user['freezer_code']) ? 'is-filled' : ''; ?> mb-3">
+                                        <label class="form-label">Freezer Code *</label>
+                                        <input type="text" name="freezer_code_partner" class="form-control" value="<?php echo sanitize($user['freezer_code'] ?? ''); ?>">
+                                    </div>
+                                    <p class="text-xs text-muted mt-n2">Unique code retailers will enter to auto-link to this Freezer Partner</p>
+                                </div>
+                            </div>
+                            <?php endif; ?>
 
                             <!-- Authorized Representative -->
                             <h6 class="text-uppercase text-secondary text-xs font-weight-bolder mt-4 mb-2">Authorized Representative</h6>
@@ -395,22 +449,16 @@ require_once '../includes/sidebar.php';
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <div class="input-group input-group-outline <?php echo !empty($user['freezer_serial']) ? 'is-filled' : ''; ?> mb-3">
                                         <label class="form-label">Serial #</label>
                                         <input type="text" name="freezer_serial" class="form-control" value="<?php echo sanitize($user['freezer_serial'] ?? ''); ?>">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <div class="input-group input-group-outline <?php echo !empty($user['freezer_status']) ? 'is-filled' : ''; ?> mb-3">
                                         <label class="form-label">Freezer Status</label>
                                         <input type="text" name="freezer_status" class="form-control" value="<?php echo sanitize($user['freezer_status'] ?? ''); ?>">
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="input-group input-group-outline <?php echo !empty($user['freezer_code']) ? 'is-filled' : ''; ?> mb-3">
-                                        <label class="form-label">Freezer Code</label>
-                                        <input type="text" name="freezer_code" class="form-control" value="<?php echo sanitize($user['freezer_code'] ?? ''); ?>">
                                     </div>
                                 </div>
                             </div>

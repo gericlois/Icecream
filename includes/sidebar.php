@@ -36,6 +36,14 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link text-white <?php echo ($active_page ?? '') === 'inventory' ? 'active sidebar-active' : ''; ?>" href="<?php echo BASE_URL; ?>/admin/inventory.php">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="material-icons opacity-10">inventory</i>
+                    </div>
+                    <span class="nav-link-text ms-1">Inventory</span>
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link text-white <?php echo ($active_page ?? '') === 'packages' ? 'active sidebar-active' : ''; ?>" href="<?php echo BASE_URL; ?>/admin/packages.php">
                     <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="material-icons opacity-10">inventory_2</i>
@@ -150,6 +158,40 @@
                 </a>
             </li>
 
+<?php elseif ($_SESSION['role'] === 'freezer_partner'): ?>
+            <li class="nav-item">
+                <a class="nav-link text-white <?php echo ($active_page ?? '') === 'dashboard' ? 'active sidebar-active' : ''; ?>" href="<?php echo BASE_URL; ?>/freezer-partner/index.php">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="material-icons opacity-10">dashboard</i>
+                    </div>
+                    <span class="nav-link-text ms-1">Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white <?php echo ($active_page ?? '') === 'retailers' ? 'active sidebar-active' : ''; ?>" href="<?php echo BASE_URL; ?>/freezer-partner/retailers.php">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="material-icons opacity-10">ac_unit</i>
+                    </div>
+                    <span class="nav-link-text ms-1">My Retailers</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white <?php echo ($active_page ?? '') === 'orders' ? 'active sidebar-active' : ''; ?>" href="<?php echo BASE_URL; ?>/freezer-partner/orders.php">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="material-icons opacity-10">receipt_long</i>
+                    </div>
+                    <span class="nav-link-text ms-1">Orders</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white <?php echo ($active_page ?? '') === 'earnings' ? 'active sidebar-active' : ''; ?>" href="<?php echo BASE_URL; ?>/freezer-partner/earnings.php">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="material-icons opacity-10">payments</i>
+                    </div>
+                    <span class="nav-link-text ms-1">My Earnings</span>
+                </a>
+            </li>
+
 <?php elseif ($_SESSION['role'] === 'retailer'): ?>
             <li class="nav-item">
                 <a class="nav-link text-white <?php echo ($active_page ?? '') === 'dashboard' ? 'active sidebar-active' : ''; ?>" href="<?php echo BASE_URL; ?>/retailer/index.php">
@@ -213,14 +255,6 @@
                         <i class="material-icons opacity-10">store</i>
                     </div>
                     <span class="nav-link-text ms-1">Town Override</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link text-white <?php echo ($active_page ?? '') === 'freezer_partner' ? 'active sidebar-active' : ''; ?>" href="<?php echo BASE_URL; ?>/retailer/freezer_partner.php">
-                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="material-icons opacity-10">handshake</i>
-                    </div>
-                    <span class="nav-link-text ms-1">Freezer Partner</span>
                 </a>
             </li>
             <li class="nav-item">

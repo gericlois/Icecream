@@ -20,7 +20,7 @@ if ($flavor_id < 1 || $qty < 1) {
 
 // Get product and flavor info
 $stmt = $conn->prepare("
-    SELECT pf.id as flavor_id, pf.flavor_name, p.id as product_id, p.name as product_name, p.qty_per_pack, p.unit_price
+    SELECT pf.id as flavor_id, pf.flavor_name, pf.stock_packs, p.id as product_id, p.name as product_name, p.qty_per_pack, p.unit_price
     FROM product_flavors pf
     JOIN products p ON pf.product_id = p.id
     WHERE pf.id = ? AND pf.status = 'active' AND p.status = 'active'
@@ -37,6 +37,21 @@ if (!$result) {
 
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
+}
+
+// Stock check (counted in packs), accounting for what's already in the cart
+$stock = (int)$result['stock_packs'];
+if ($stock <= 0) {
+    echo json_encode(['success' => false, 'message' => 'This flavor is out of stock']);
+    exit;
+}
+$in_cart = 0;
+foreach ($_SESSION['cart'] as $ci) {
+    if ($ci['product_flavor_id'] == $flavor_id) { $in_cart = (int)$ci['quantity_packs']; break; }
+}
+if ($in_cart + $qty > $stock) {
+    echo json_encode(['success' => false, 'message' => 'Only ' . $stock . ' pack(s) in stock' . ($in_cart > 0 ? '; you already have ' . $in_cart . ' in your cart' : '') . '.']);
+    exit;
 }
 
 // Check if already in cart - increment quantity
